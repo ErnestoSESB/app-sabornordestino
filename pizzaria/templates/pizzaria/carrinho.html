@@ -98,6 +98,7 @@
             <div><span>Endereço: </span><strong>{% if pedido_em_andamento.endereco %}{{ pedido_em_andamento.endereco }}{% else %}Retirada no local{% endif %}</strong></div>
             <div><span>Pagamento: </span><strong>{{ pedido_em_andamento.forma_pagamento }}</strong></div>
             {% if pedido_em_andamento.observacao %}<div><span>Observações: </span><strong>{{ pedido_em_andamento.observacao }}</strong></div>{% endif %}
+            <div><span>Horário do pedido: </span><strong>{{ pedido_em_andamento.criado_em|date:"H:i" }}</strong></div>
           </div>
 
           <div class="tracking-total">

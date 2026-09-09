@@ -127,6 +127,7 @@
                     <p class="print-right">Subtotal: R$ {{ pedido.subtotal }}</p>
                     <p class="print-right">Taxa de Entrega: R$ {{ pedido.taxa_entrega }}</p>
                     <p class="print-total">TOTAL: R$ {{ pedido.total }}</p>
+                    <br>
                     {% if pedido.observacao %}<hr><p><strong>Obs:</strong> {{ pedido.observacao }}</p>{% endif %}
                     <hr>
                     <p class="print-center">Status: {{ pedido.status }}</p>

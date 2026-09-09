@@ -38,6 +38,8 @@ env/
 
 # Django local database
 db.sqlite3
+.dbsqlite3
+db.sqlite3
 db.sqlite3-journal
 
 # Backup files
