@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Comanda #{{ pedido.id }}</title>
+  <style>
+    @media print {
+      @page { size: 80mm 297mm; margin: 0; }
+      html, body {
+        width: 80mm !important;
+        min-width: 0;
+        max-width: 80mm !important;
+        min-height: 0;
+        margin: 0;
+        padding: 0;
+        overflow-x: visible;
+        overflow-y: visible;
+      }
+      body {
+        width: 68mm !important;
+        max-width: 68mm !important;
+        margin: 0 6mm !important;
+        padding: 2mm 0 !important;
+        overflow-wrap: anywhere;
+      }
+      .no-print { display: none; }
+    }
+    body {
+      font-family: 'Courier New', monospace;
+      width: 100%;
+      max-width: 80mm;
+      box-sizing: border-box;
+      margin: 0 auto;
+      padding: 4mm 0;
+      font-size: 15px;
+      line-height: 1.45;
+      overflow-x: hidden;
+      overflow-y: visible;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      max-width: 100%;
+      white-space: normal;
+    }
+    h1, h2 { text-align: center; margin: 6px 0; }
+    h1 { font-size: 22px; }
+    h2 { font-size: 19px; }
+    .divider { border-top: 1px dashed #000; margin: 10px 0; }
+    .item { margin: 8px 0; }
+    .pizza-nome { font-size: 18px; font-weight: bold; margin: 0 0 5px 0; }
+    .sabor-lista { font-size: 17px; font-weight: bold; margin: 5px 0; }
+    .info { margin: 4px 0; }
+    .campo { font-size: 15px; margin: 4px 0; }
+    .adicionais { font-size: 14px; margin: 4px 0; }
+    .total { font-size: 1.25em; font-weight: bold; margin-top: 6px; text-align: right; }
+    .campo, .info, .total, .divider { overflow-wrap: anywhere; }
+    .observacao {
+      font-size: 14px;
+      margin: 8px 0;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+    p, h1, h2, h3 { max-width: 100%; }
+    .item { page-break-inside: avoid; break-inside: avoid; width: 100%; }
+    .grupo-titulo {
+      border-bottom: 1px solid #000;
+      font-size: 14px;
+      font-weight: bold;
+      margin: 10px 0 6px;
+      padding-bottom: 2px;
+    }
+    ul.adicionais { padding-left: 16px; margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <h1>PIZZARIA SABOR NORDESTINO</h1>
+  <p style="text-align:center; margin: 4px 0;">Av. Ivan Cavalcante - 21<br>Lucrécia - RN<br>(84) 99034-6414</p>
+  
+  <div class="divider"></div>
+  
+  <h2>PEDIDO #{{ pedido.id|stringformat:"03d" }}</h2>
+  <p class="info"><strong>Cliente:</strong> {{ pedido.cliente }}</p>
+  <p class="info"><strong>Data:</strong> {{ pedido.criado_em|date:"d/m/Y H:i" }}</p>
+  <p class="info"><strong>Telefone:</strong> {{ pedido.telefone }}</p>
+  {% if pedido.endereco %}
+  <p class="info"><strong>Endereço:</strong> {{ pedido.endereco }}</p>
+  {% endif %}
+  {% if pedido.local_entrega %}
+  <p class="info"><strong>Local:</strong> {{ pedido.local_entrega.nome }}</p>
+  {% else %}
+  <p class="info"><strong>Retirada no local</strong></p>
+  {% endif %}
+  
+  <div class="divider"></div>
+  
+  <h3>ITENS:</h3>
+  {% for item_data in itens_processados %}
+  {% with item=item_data.item sabores_data=item_data.sabores_data %}
+  {% ifchanged item.item_tipo %}
+  <p class="grupo-titulo">{% if item.item_tipo == 'pizza' %}PIZZAS{% else %}BEBIDAS{% endif %}</p>
+  {% endifchanged %}
+  <div class="item">
+    {% if item.item_tipo == 'bebida' %}
+      <p class="pizza-nome"><strong>{{ item.quantidade }}x {{ item.bebida.nome }}</strong></p>
+    {% elif sabores_data %}
+      <p class="pizza-nome"><strong>{{ item.quantidade }}x Pizza Mista</strong></p>
+      <p class="sabor-lista">Sabores: {{ sabores_data.nomes|join:", " }}</p>
+    {% else %}
+      <p class="pizza-nome"><strong>{{ item.quantidade }}x {{ item.pizza.nome }}</strong></p>
+      <p class="campo"><strong>Ingredientes:</strong> {{ item.pizza.ingredientes }}</p>
+    {% endif %}
+    
+    {% if item.item_tipo == 'pizza' %}
+      <p class="campo"><strong>Tamanho:</strong> {% if item.tamanho == 'P' %}Pequena{% elif item.tamanho == 'M' %}Média{% else %}Grande{% endif %}</p>
+    {% endif %}
+    
+    {% if item.item_tipo == 'pizza' and item.borda_chocolate or item.item_tipo == 'pizza' and item.catupiry_cima != 'nao' or item.item_tipo == 'pizza' and item.catupiry_borda %}
+    <p class="campo"><strong>Adicionais:</strong></p>
+    <ul class="adicionais" style="margin: 5px 0;">
+      {% if item.borda_chocolate %}<li>Borda de Chocolate</li>{% endif %}
+      {% if item.catupiry_cima == 'inteira' %}<li>Catupiry por Cima (Inteira)</li>{% endif %}
+      {% if item.catupiry_cima == 'metade' %}<li>Catupiry por Cima (Metade)</li>{% endif %}
+      {% if item.catupiry_borda %}<li>Catupiry Original na Borda</li>{% endif %}
+    </ul>
+    {% endif %}
+    
+    <p class="campo"><strong>Valor:</strong> R$ {{ item.preco_unitario }} x {{ item.quantidade }} = R$ {{ item.subtotal }}</p>
+  </div>
+  {% endwith %}
+  {% endfor %}
+  
+  <div class="divider"></div>
+  
+  <p style="text-align: right; margin: 5px 0;">Subtotal: R$ {{ pedido.subtotal }}</p>
+  <p style="text-align: right; margin: 5px 0; font-weight: bold;">Taxa de Entrega: R$ {{ pedido.taxa_entrega }}</p>
+  <p class="total">TOTAL: R$ {{ pedido.total }}</p>
+  
+  {% if pedido.observacao %}
+  <div class="divider"></div>
+  <p class="observacao"><strong>Obs:</strong> {{ pedido.observacao }}</p>
+  {% endif %}
+  
+  <div class="no-print" style="margin-top:30px;text-align:center;">
+    <button onclick="window.print()" style="padding:12px 24px;background:#d32f2f;color:white;border:none;border-radius:8px;cursor:pointer;font-size:16px;">Imprimir</button>
+    <button onclick="window.close()" style="padding:12px 24px;background:#616161;color:white;border:none;border-radius:8px;cursor:pointer;font-size:16px;margin-left:10px;">Fechar</button>
+  </div>
+  
+  <script>
+    // Auto-impressão ao carregar a página
+    // window.onload = function() { window.print(); }
+  </script>
+</body>
+</html>

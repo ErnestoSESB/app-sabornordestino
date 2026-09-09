@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Garçons - Sabor &amp; Nordestino</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'pizzaria/gerenciar.css' %}?v=12">
+    <link rel="stylesheet" href="{% static 'pizzaria/painel_sidebar.css' %}?v=11">
+</head>
+<body class="admin-body">
+    <div class="admin-layout">
+        {% include 'pizzaria/partials/painel_sidebar.html' with active_page='garcons' %}
+        <main class="admin-content">
+            <header class="admin-header">
+                <div>
+                    <h1>Gerenciar Garçons</h1>
+                    <p>Cadastre os acessos restritos para a equipe.</p>
+                </div>
+            </header>
+
+            {% if messages %}
+                {% for message in messages %}<p class="form-message">{{ message }}</p>{% endfor %}
+            {% endif %}
+
+            <div class="form-container-card">
+                <h2>Novo garçom</h2>
+                <form method="post" action="{% url 'garcom_adicionar' %}" class="admin-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="nome">Nome do garçom</label>
+                        <input id="nome" name="nome" class="form-control" type="text" autocomplete="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="senha">Senha</label>
+                        <input id="senha" name="senha" class="form-control" type="password" minlength="6" autocomplete="new-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i> Cadastrar garçom</button>
+                </form>
+            </div>
+
+            <div class="items-list-grid" style="margin-top: 24px;">
+                {% for garcom in garcons %}
+                    <div class="management-card">
+                        <div class="item-info">
+                            <h3>{{ garcom.get_full_name|default:garcom.username }}</h3>
+                            <p class="item-desc">Usuário: {{ garcom.username }}</p>
+                        </div>
+                        <form method="post" action="{% url 'garcom_excluir' garcom.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-user-slash"></i> Desativar</button>
+                        </form>
+                    </div>
+                {% empty %}
+                    <div class="management-card"><p class="item-desc">Nenhum garçom cadastrado.</p></div>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>

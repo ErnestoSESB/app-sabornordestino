@@ -1,0 +1,256 @@
+/* Estilo compartilhado da sidebar administrativa */
+.admin-body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-main);
+    line-height: 1.6;
+    overflow: hidden;
+}
+
+.admin-layout {
+    display: flex;
+    height: 100vh;
+}
+
+.admin-sidebar {
+    width: 280px;
+    background-color: var(--bg-card);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 25px 20px;
+    flex-shrink: 0;
+}
+
+.sidebar-brand {
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-brand .logo {
+    font-size: 1.5rem;
+}
+
+.brand-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.nav-category {
+    font-size: 0.75rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    margin: 25px 0 10px 10px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    color: var(--text-muted);
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    margin-bottom: 5px;
+}
+
+.nav-item i {
+    width: 20px;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    background-color: rgba(255, 87, 34, 0.1);
+    color: var(--primary);
+}
+
+.nav-item.active {
+    background-color: var(--primary);
+    color: #fff;
+}
+
+.nav-submenu {
+    padding-left: 10px;
+}
+
+.sidebar-footer {
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+    margin-top: auto;
+}
+
+.logout-btn {
+    color: #E53935;
+}
+
+.logout-btn:hover {
+    background-color: rgba(229, 57, 53, 0.1);
+    color: #E53935;
+}
+
+@media (max-width: 1200px) {
+    .admin-layout {
+        flex-direction: column;
+    }
+
+    .admin-sidebar {
+        width: 100%;
+        height: auto;
+        padding: 15px;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 12px;
+    }
+
+    .sidebar-nav {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 8px;
+        overflow: visible;
+        white-space: normal;
+        padding-bottom: 0;
+        flex: 0;
+        max-width: 100%;
+    }
+
+    .sidebar-nav .nav-category {
+        display: none;
+    }
+
+    .nav-submenu {
+        padding-left: 0;
+        display: contents;
+    }
+
+    .sidebar-nav .nav-item {
+        display: inline-flex;
+        margin-right: 0;
+        margin-bottom: 0;
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+
+    .sidebar-footer {
+        display: block;
+        border-top: 0;
+        padding-top: 0;
+    }
+
+    .sidebar-brand {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-body,
+    .admin-layout,
+    .admin-content {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .admin-content {
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-color) transparent;
+    }
+
+    .admin-content::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .admin-content::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 4px;
+    }
+
+    .admin-sidebar {
+        padding: 10px;
+        gap: 6px;
+    }
+
+    .sidebar-brand {
+        margin: 0;
+    }
+
+    .sidebar-brand .logo {
+        font-size: 1.1rem;
+    }
+
+    .brand-subtitle {
+        display: none;
+    }
+
+    .sidebar-nav {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 6px;
+        overflow: visible;
+        white-space: normal;
+        padding-bottom: 0;
+    }
+
+    .nav-submenu {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding-left: 0;
+    }
+
+    .sidebar-nav .nav-item {
+        display: inline-flex;
+        margin: 0;
+        padding: 7px 10px;
+        font-size: 0.82rem;
+        gap: 7px;
+        border-radius: 999px;
+    }
+
+    .sidebar-nav .nav-item i {
+        width: auto;
+        font-size: 0.9rem;
+    }
+
+    .sidebar-footer {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        overflow: visible;
+        white-space: normal;
+        padding-top: 0;
+        margin-top: 0;
+    }
+
+    .sidebar-footer form {
+        display: inline-block;
+        margin: 0;
+    }
+
+    .sidebar-footer .nav-item {
+        display: inline-flex;
+        width: auto !important;
+        margin: 0;
+        padding: 7px 10px;
+        font-size: 0.8rem;
+        border-radius: 999px;
+    }
+}

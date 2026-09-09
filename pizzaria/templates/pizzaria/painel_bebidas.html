@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Bebidas - Sabor &amp; Nordestino</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Playfair+Display:ital,wght@0,600;0,700;1,600&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'pizzaria/gerenciar.css' %}?v=7">
+    <link rel="stylesheet" href="{% static 'pizzaria/painel_sidebar.css' %}?v=11">
+</head>
+<body class="admin-body">
+    <div class="admin-layout">
+        {% include 'pizzaria/partials/painel_sidebar.html' with active_page='bebidas' %}
+
+        <main class="admin-content">
+            <header class="admin-header">
+                <div>
+                    <h1>Gerenciar Bebidas</h1>
+                    <p>Adicione, edite ou remova bebidas disponíveis no cardápio</p>
+                </div>
+                <div class="admin-actions-top">
+                    <a href="{% url 'painel' %}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Voltar ao Painel</a>
+                    <a href="{% url 'bebida_adicionar' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nova Bebida</a>
+                </div>
+            </header>
+
+            <div class="items-list-grid">
+                {% for bebida in bebidas %}
+                <div class="management-card">
+                    {% if bebida.imagem %}
+                    <img src="{{ bebida.imagem.url }}" alt="{{ bebida.nome }}" class="item-thumb">
+                    {% endif %}
+                    <div class="item-info">
+                        <h3>{{ bebida.nome }}{% if not bebida.disponivel %} <span class="item-desc">(Indisponível)</span>{% endif %}</h3>
+                        <p class="item-desc"><strong>Descrição:</strong> {{ bebida.descricao|default:'Sem descrição' }}</p>
+                        <p class="item-price">Preço: R$ {{ bebida.preco|floatformat:2 }}</p>
+                    </div>
+                    <div class="item-actions">
+                        <a href="{% url 'bebida_editar' bebida.id %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-pen"></i> Editar</a>
+                        <form method="post" action="{% url 'bebida_excluir' bebida.id %}" onsubmit="return confirm('Tem certeza que deseja excluir esta bebida?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i> Excluir</button>
+                        </form>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="management-card">
+                    <div class="item-info">
+                        <h3>Nenhuma bebida cadastrada</h3>
+                        <p class="item-desc">Adicione bebidas para começar.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>

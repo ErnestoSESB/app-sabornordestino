@@ -1,0 +1,63 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Pizzas - Sabor &amp; Nordestino</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Playfair+Display:ital,wght@0,600;0,700;1,600&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'pizzaria/gerenciar.css' %}?v=6">
+    <link rel="stylesheet" href="{% static 'pizzaria/painel_sidebar.css' %}?v=11">
+</head>
+<body class="admin-body">
+    <div class="admin-layout">
+        {% include 'pizzaria/partials/painel_sidebar.html' with active_page='pizzas' %}
+
+        <main class="admin-content">
+            <header class="admin-header">
+                <div>
+                    <h1>Gerenciar Pizzas</h1>
+                    <p>Adicione, edite ou remova pizzas do cardápio</p>
+                </div>
+                <div class="admin-actions-top">
+                    <a href="{% url 'painel' %}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Voltar ao Painel</a>
+                    <a href="{% url 'pizza_adicionar' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nova Pizza</a>
+                </div>
+            </header>
+
+            <div class="items-list-grid">
+                {% for pizza in pizzas %}
+                <div class="management-card pizza-management-card">
+                    {% if pizza.imagem %}
+                    <img src="{{ pizza.imagem.url }}" alt="{{ pizza.nome }}" class="item-thumb">
+                    {% endif %}
+                    <div class="item-info">
+                        <h3>{{ pizza.nome }}{% if not pizza.disponivel %} <span class="item-desc">(Indisponível)</span>{% endif %}</h3>
+                        <p class="item-category-label"><strong>Categoria:</strong> {% if pizza.categoria == 'doce' %}Pizza doce{% else %}Pizza salgada{% endif %}</p>
+                        <p class="item-desc">{{ pizza.ingredientes }}</p>
+                        <p class="item-price">P: R$ 25,00 | M: R$ 32,00 | G: R$ 39,00</p>
+                    </div>
+                    <div class="item-actions">
+                        <a href="{% url 'pizza_editar' pizza.id %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-pen"></i> Editar</a>
+                        <form method="post" action="{% url 'pizza_excluir' pizza.id %}" onsubmit="return confirm('Tem certeza que deseja excluir esta pizza?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i> Excluir</button>
+                        </form>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="management-card">
+                    <div class="item-info">
+                        <h3>Nenhuma pizza cadastrada</h3>
+                        <p class="item-desc">Adicione pizzas para começar.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>

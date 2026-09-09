@@ -1,0 +1,500 @@
+/* ==========================================================================
+   Estilo da página de escolher sabores
+   Mantém o mesmo visual do index.html (escuro premium, accents em laranja, tipografia elegante)
+   ========================================================================== */
+
+.order-hero {
+    background:
+        linear-gradient(rgba(17, 17, 17, 0.86), rgba(17, 17, 17, 0.86)),
+        url('https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+    padding: 170px 0 80px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.order-hero .container {
+    position: static;
+}
+
+.order-hero .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 20px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    background: rgba(255, 87, 34, 0.12);
+    border: 1px solid rgba(255, 87, 34, 0.3);
+    color: var(--primary);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.order-hero h1 {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(2.5rem, 4vw, 4rem);
+    line-height: 1.1;
+    color: var(--text-light);
+}
+
+.order-hero p {
+    margin: 14px 0 0;
+    color: var(--text-muted);
+    font-size: 1.05rem;
+}
+
+.order-steps-section {
+    padding: 80px 0 100px;
+    background-color: var(--bg-main);
+}
+
+.step-card,
+.builder-panel {
+    background: linear-gradient(180deg, rgba(34, 34, 34, 0.92), rgba(22, 22, 22, 0.96));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 18px;
+    padding: 32px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+}
+
+.intro-card {
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.badge-sm {
+    display: inline-block;
+    margin-bottom: 14px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 87, 34, 0.1);
+    color: var(--primary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.intro-card h2 {
+    margin: 0 0 10px;
+    font-family: var(--font-serif);
+    font-size: clamp(2rem, 2.6vw, 2.8rem);
+    color: var(--text-light);
+}
+
+.intro-card p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 760px;
+}
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.step-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), #ff8a65);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.step-title h3 {
+    margin: 0 0 6px;
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    color: var(--text-light);
+}
+
+.step-title p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.92rem;
+}
+
+.select-wrapper {
+    position: relative;
+}
+
+.custom-select,
+.builder-panel select {
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: rgba(18, 18, 18, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px 52px 16px 18px;
+    color: var(--text-light);
+    font-size: 1rem;
+    font-family: var(--font-sans);
+    outline: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.custom-select:focus,
+.builder-panel select:focus {
+    border-color: rgba(255, 87, 34, 0.6);
+    box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.12);
+}
+
+.custom-select option,
+.builder-panel select option {
+    background: #1a1a1a;
+    color: var(--text-light);
+}
+
+.select-icon {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.flavors-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.flavor-option {
+    display: block;
+    cursor: pointer;
+}
+
+.flavor-option input[type="radio"] {
+    display: none;
+}
+
+.option-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 120px;
+    padding: 22px 18px;
+    text-align: center;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.option-card h4 {
+    margin: 0 0 6px;
+    color: var(--text-light);
+    font-size: 1.08rem;
+    font-weight: 600;
+}
+
+.option-card p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.flavor-option:hover .option-card {
+    transform: translateY(-2px);
+    border-color: rgba(255, 87, 34, 0.38);
+}
+
+.flavor-option input[type="radio"]:checked + .option-card {
+    background: rgba(255, 87, 34, 0.06);
+    border-color: rgba(255, 87, 34, 0.7);
+    box-shadow: 0 0 0 1px rgba(255, 87, 34, 0.38);
+}
+
+.builder-stack {
+    display: grid;
+    gap: 22px;
+}
+
+.flavor-panel {
+    margin-top: 0;
+}
+
+.builder-panel__header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.builder-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.96rem;
+    flex-shrink: 0;
+}
+
+.builder-step--soft {
+    background: rgba(255, 87, 34, 0.12);
+    color: var(--primary);
+    border: 1px solid rgba(255, 87, 34, 0.28);
+}
+
+.builder-panel__header h3 {
+    margin: 0 0 6px;
+    font-size: 1.4rem;
+    font-family: var(--font-serif);
+    color: var(--text-light);
+}
+
+.builder-panel__header p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.flavor-panel select {
+    margin-top: 8px;
+}
+
+.flavor-panel__ingredients {
+    margin-top: 16px;
+    padding: 16px 18px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: var(--text-muted);
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+}
+
+.builder-panel--accent {
+    margin-top: 24px;
+    background: linear-gradient(180deg, rgba(255, 87, 34, 0.04), rgba(34, 34, 34, 0.92));
+    border-color: rgba(255, 87, 34, 0.16);
+}
+
+.addons-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.addon-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 16px;
+    border-radius: 14px;
+    background: rgba(14, 14, 14, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+}
+
+.addon-option input[type="checkbox"] {
+    accent-color: var(--primary);
+    width: 18px;
+    height: 18px;
+    margin: 0;
+}
+
+.addon-option__box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.addon-option__box strong,
+.addon-option__label {
+    color: var(--text-light);
+    font-weight: 600;
+}
+
+.addon-option__box small {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.addon-option--select {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+}
+
+.addon-option--select .addon-option__label {
+    font-size: 0.95rem;
+}
+
+.builder-summary {
+    margin-top: 24px;
+}
+
+.drink-question {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.drink-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-light);
+    cursor: pointer;
+}
+
+.drink-option input {
+    accent-color: var(--primary);
+}
+
+.bebida-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.bebida-item .bebida-select {
+    flex: 1;
+}
+
+.bebida-remove-btn {
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-muted);
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.bebida-remove-btn:hover {
+    border-color: rgba(229, 57, 53, 0.4);
+    color: #ff7676;
+}
+
+.mt-2 {
+    margin-top: 10px;
+}
+
+.builder-actions {
+    display: flex;
+    gap: 16px;
+    margin-top: 22px;
+}
+
+.builder-submit {
+    flex: 1;
+}
+
+.builder-submit--secondary {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-light);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.summary-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px 22px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.summary-box p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.summary-box__price {
+    color: var(--primary);
+    font-size: 1.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.builder-submit {
+    width: 100%;
+    margin-top: 0;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 1rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), #ff8a65);
+    color: white;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.builder-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 30px rgba(255, 87, 34, 0.26);
+}
+
+@media (max-width: 992px) {
+    .steps-grid,
+    .addons-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-box {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 640px) {
+    .order-hero {
+        padding-top: 150px;
+    }
+
+    .step-card,
+    .builder-panel {
+        padding: 24px 20px;
+    }
+
+    .flavors-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .option-card {
+        min-height: 100px;
+    }
+}

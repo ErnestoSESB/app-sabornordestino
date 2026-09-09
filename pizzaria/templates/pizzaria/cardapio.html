@@ -1,0 +1,305 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cardapio - Sabor Nordestino</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="shortcut icon" href="/media/pizzas/image.png?v=1">
+    <link rel="apple-touch-icon" href="/media/pizzas/image.png?v=1">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="{% static 'pizzaria/index.css' %}" />
+    <link rel="stylesheet" href="{% static 'pizzaria/cardapio.css' %}" />
+  </head>
+  <body>
+    <header class="navbar navbar-solid">
+      <div class="container nav-container">
+        <div class="logo">
+          <i class="fa-solid fa-fire text-primary"></i>
+          <span class="logo-text"
+            >Sabor <span class="text-primary"></span> Nordestino</span
+          >
+        </div>
+        <nav class="nav-links">
+          <a href="{% url 'index' %}">Inicio</a>
+          <a href="{% url 'cardapio' %}" class="active">Cardapio</a>
+          <a href="{% url 'contato' %}">Contato</a>
+          <a href="{% url 'carrinho_detalhes' %}">Pedido</a>
+        </nav>
+        <div class="nav-actions">
+          <a
+            href="{% url 'carrinho_detalhes' %}"
+            class="cart-btn"
+            aria-label="Ver pedido"
+            ><i class="fa-solid fa-bag-shopping"></i
+          ></a>
+        </div>
+      </div>
+    </header>
+
+    <section class="menu-hero">
+      <div class="container">
+        <div class="badge">
+          <i class="fa-solid fa-fire"></i> Feitas na hora, com ingredientes
+          frescos
+        </div>
+        <h1>Nosso Cardapio</h1>
+        <p>
+          Escolha a sua favorita. Todas com massa de fermentacao natural e
+          assadas no<br />forno a lenha.
+        </p>
+        <a
+          href="{% url 'escolher_sabores' %}"
+          class="btn btn-primary menu-order-action"
+          ><i class="fa-solid fa-fire"></i> Fazer meu pedido</a
+        >
+      </div>
+    </section>
+
+    <section class="menu-section">
+      <div class="container">
+        <div class="menu-controls">
+          <div class="filter-buttons">
+            <button class="btn-filter active" type="button" data-filter="todas">
+              Todas
+            </button>
+            <button class="btn-filter" type="button" data-filter="doce">
+              Pizzas doces
+            </button>
+            <button class="btn-filter" type="button" data-filter="salgada">
+              Pizzas salgadas
+            </button>
+            <button class="btn-filter" type="button" data-filter="bebida">
+              Bebidas
+            </button>
+          </div>
+        </div>
+        <section class="category-section" data-category-section="doce">
+          <div class="category-heading">
+            <span class="subtitle">PARA ADOÇAR O PEDIDO</span>
+            <h2>Pizzas doces</h2>
+          </div>
+          <div class="menu-grid">
+            {% for pizza in pizzas %} {% if pizza.categoria == 'doce' %}
+            <article class="menu-card" data-category="doce">
+              <div class="card-image">
+                {% if pizza.imagem %}
+                <img
+                  src="{{ pizza.imagem.url }}"
+                  alt="Pizza {{ pizza.nome }}"
+                />
+                {% else %}
+                <div
+                  class="card-image-placeholder"
+                  aria-label="Imagem não disponível"
+                >
+                  <i class="fa-solid fa-pizza-slice"></i>
+                </div>
+                {% endif %}
+              </div>
+              <div class="card-content">
+                <h3>{{ pizza.nome }}</h3>
+                <p>{{ pizza.ingredientes }}</p>
+              </div>
+            </article>
+            {% endif %} {% empty %}
+            <p>Nenhuma pizza doce disponível no momento.</p>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="category-section" data-category-section="salgada">
+          <div class="category-heading">
+            <span class="subtitle">AS CLÁSSICAS DA CASA</span>
+            <h2>Pizzas salgadas</h2>
+          </div>
+          <div class="menu-grid">
+            {% for pizza in pizzas %} {% if pizza.categoria == 'salgada' %}
+            <article class="menu-card" data-category="salgada">
+              <div class="card-image">
+                {% if pizza.imagem %}
+                <img
+                  src="{{ pizza.imagem.url }}"
+                  alt="Pizza {{ pizza.nome }}"
+                />
+                {% else %}
+                <div
+                  class="card-image-placeholder"
+                  aria-label="Imagem não disponível"
+                >
+                  <i class="fa-solid fa-pizza-slice"></i>
+                </div>
+                {% endif %}
+              </div>
+              <div class="card-content">
+                <h3>{{ pizza.nome }}</h3>
+                <p>{{ pizza.ingredientes }}</p>
+              </div>
+            </article>
+            {% endif %} {% empty %}
+            <p>Nenhuma pizza salgada disponível no momento.</p>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="category-section" data-category-section="bebida">
+          <div class="category-heading">
+            <span class="subtitle">PARA ACOMPANHAR</span>
+            <h2>Bebidas</h2>
+          </div>
+          <div class="menu-grid">
+            {% for bebida in bebidas %}
+            <article class="menu-card" data-category="bebida">
+              <div class="card-image">
+                {% if bebida.imagem %}
+                <img
+                  src="{{ bebida.imagem.url }}"
+                  alt="Bebida {{ bebida.nome }}"
+                />
+                {% else %}
+                <div
+                  class="card-image-placeholder"
+                  aria-label="Imagem não disponível"
+                >
+                  <i class="fa-solid fa-mug-saucer"></i>
+                </div>
+                {% endif %}
+              </div>
+	      <div class="card-content">
+	     	 <h3>{{ bebida.nome }}</h3>
+		 <p>{{ bebida.descricao|default:"Refrescante para acompanhar sua pizza." }}</p>
+		 <div class="card-price">R$ {{ bebida.preco }}</div>
+	      </div>
+            </article>
+            {% empty %}
+            <p>Nenhuma bebida disponível no momento.</p>
+            {% endfor %}
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <script>
+      document.querySelectorAll(".btn-filter").forEach(function (button) {
+        button.addEventListener("click", function () {
+          document.querySelectorAll(".btn-filter").forEach(function (item) {
+            item.classList.remove("active");
+          });
+          button.classList.add("active");
+
+          document
+            .querySelectorAll("[data-category-section]")
+            .forEach(function (section) {
+              section.hidden =
+                button.dataset.filter !== "todas" &&
+                section.dataset.categorySection !== button.dataset.filter;
+            });
+        });
+      });
+    </script>
+
+    <footer>
+      <div class="info-bar">
+        <div class="container info-grid">
+          <div class="info-item">
+            <i class="fa-solid fa-location-dot"></i>
+            <div>
+              <h4>Onde estamos</h4>
+              <p>Av. Ivan Cavalcante - 21, Lucrecia RN</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <i class="fa-solid fa-phone"></i>
+            <div>
+              <h4>Telefone</h4>
+              <p>(84) 99034-6414</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <i class="fa-regular fa-clock"></i>
+            <div>
+              <h4>Horário</h4>
+              <p>Ter a Dom · à partir das 18h</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="main-footer">
+        <div class="container footer-grid">
+          <div class="footer-brand">
+            <div class="logo">
+              <i class="fa-solid fa-fire text-primary"></i>
+              <span class="logo-text"
+                >Sabor <span class="text-primary">&</span> Nordestino</span
+              >
+            </div>
+            <p>
+              Pizzas com massa de fermentação natural, assadas no forno a lenha.
+              O sabor que acende a sua fome.
+            </p>
+            <div class="social-links">
+              <a
+                href="https://www.instagram.com/pizzariasabornordestinoo?utm_source=ig_web_button_share_sheet&igsi=ZDNlZDc0MzIxNw=="
+                ><i class="fa-brands fa-instagram"></i
+              ></a>
+              <a
+                href="https://api.whatsapp.com/send/?phone=5584990346414&text&type=phone_number&app_absent=0"
+                ><i class="fa-brands fa-whatsapp"></i
+              ></a>
+            </div>
+          </div>
+
+          <div class="footer-links">
+            <h4>Navegação</h4>
+            <ul>
+              <li><a href="{% url 'index' %}">Início</a></li>
+              <li><a href="{% url 'cardapio' %}">Cardápio</a></li>
+              <li><a href="{% url 'contato' %}">Contato</a></li>
+              <li><a href="{% url 'painel' %}">Painel Admin</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-contact">
+            <h4>Contato</h4>
+            <ul>
+              <li>
+                <i class="fa-solid fa-location-dot"></i> Av. Ivan Cavalcante -
+                21, Lucrecia RN
+              </li>
+              <li><i class="fa-solid fa-phone"></i> (84) 99034-6414</li>
+              <li>
+                <i class="fa-regular fa-clock"></i> Ter a Dom · à partir das 18h
+              </li>
+            </ul>
+          </div>
+
+          <div class="footer-about">
+            <h4>Sobre nós</h4>
+            <p>
+              Uma pizzaria artesanal feita com paixão. Ingredientes frescos,
+              massa de fermentação natural e o aroma inconfundível do forno a
+              lenha.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom-footer">
+        <div class="container">
+          <p>&copy; 2026 Sabor_Nordestino. Todos os direitos reservados.</p>
+          <p>Feito com fogo e paixão.</p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

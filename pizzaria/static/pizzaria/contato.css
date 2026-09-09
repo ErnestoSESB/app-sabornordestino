@@ -1,0 +1,223 @@
+/* ==========================================================================
+   Adições ao style.css (Página de Contato e WhatsApp)
+   ========================================================================== */
+
+/* Hero Contato */
+.contact-hero {
+    background: radial-gradient(circle at top, rgba(34, 34, 34, 1) 0%, var(--bg-main) 100%);
+    padding: 80px 0 40px 0;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.contact-hero h1 {
+    font-family: var(--font-serif);
+    font-size: 3.5rem;
+    margin-bottom: 15px;
+}
+
+.contact-hero p {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Grid Principal de Contato */
+.contact-section {
+    padding: 60px 0 100px 0;
+    background-color: var(--bg-main);
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    align-items: start;
+}
+
+/* Cards de Informação (Coluna Esquerda) */
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.info-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background-color: var(--bg-card);
+    padding: 20px 25px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.info-card .icon-box {
+    color: var(--primary);
+    background-color: rgba(255, 87, 34, 0.1);
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.info-text h3 {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+    color: var(--text-light);
+}
+
+.info-text p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.reservation-card {
+    margin-top: 10px;
+    background-color: rgba(255, 87, 34, 0.05);
+    border: 1px solid rgba(255, 87, 34, 0.2);
+    padding: 25px;
+    border-radius: 8px;
+}
+
+.reservation-card h3 {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    color: var(--text-light);
+    margin-bottom: 10px;
+}
+
+.reservation-card p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Formulário (Coluna Direita) */
+.contact-form-container {
+    background-color: var(--bg-card);
+    padding: 40px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.form-header {
+    margin-bottom: 30px;
+}
+
+.form-header h2 {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    margin-bottom: 5px;
+}
+
+.form-header p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.form-group input, 
+.form-group textarea {
+    width: 100%;
+    background-color: #1A1A1A;
+    border: 1px solid #333;
+    color: var(--text-light);
+    padding: 14px 16px;
+    border-radius: 6px;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input:focus, 
+.form-group textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.1);
+}
+
+.btn-block {
+    width: 100%;
+    padding: 16px;
+    font-size: 1rem;
+    margin-top: 10px;
+}
+
+/* ==========================================================================
+   Botão Flutuante do WhatsApp
+   ========================================================================== */
+.whatsapp-float {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background-color: #25D366; /* Cor oficial do WhatsApp */
+    color: #FFF;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px 12px 16px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+    z-index: 1000;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+    text-decoration: none;
+}
+
+.whatsapp-float i {
+    font-size: 1.8rem;
+}
+
+.whatsapp-float:hover {
+    background-color: #1EBE5D;
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.6);
+    color: #FFF;
+}
+
+/* Responsividade */
+@media (max-width: 900px) {
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .contact-form-container {
+        padding: 30px 20px;
+    }
+
+    .whatsapp-text {
+        display: none; /* Esconde o texto no mobile para economizar espaço */
+    }
+
+    .whatsapp-float {
+        padding: 15px; /* Deixa o botão redondo no mobile */
+        border-radius: 50%;
+        bottom: 20px;
+        right: 20px;
+    }
+}

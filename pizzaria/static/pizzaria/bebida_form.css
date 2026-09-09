@@ -1,0 +1,84 @@
+/* Formulario de bebida no layout administrativo */
+.bebida-form-content {
+    max-width: 900px;
+}
+
+.bebida-form-card {
+    max-width: 760px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 30px;
+}
+
+.bebida-form {
+    display: grid;
+    gap: 18px;
+}
+
+.bebida-form .form-group {
+    display: grid;
+    gap: 8px;
+}
+
+.bebida-form label {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.bebida-form input[type="text"],
+.bebida-form input[type="number"],
+.bebida-form input[type="file"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: #161616;
+    color: var(--text-light);
+    font: inherit;
+}
+
+.bebida-form input:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+.bebida-form small,
+.current-image {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.bebida-form a {
+    color: var(--primary);
+}
+
+.bebida-checkbox-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.bebida-checkbox-field input {
+    accent-color: var(--primary);
+}
+
+.bebida-form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 6px;
+}
+
+@media (max-width: 576px) {
+    .bebida-form-card {
+        padding: 22px 18px;
+    }
+
+    .bebida-form-actions {
+        flex-direction: column;
+    }
+}

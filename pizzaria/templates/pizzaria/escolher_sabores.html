@@ -1,0 +1,554 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Montar Pizza - Brasa & Brasa</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'pizzaria/index.css' %}">
+    <link rel="stylesheet" href="{% static 'pizzaria/escolher-sabores.css' %}">
+    <link rel="icon" type="image/png" href="/media/pizzas/image.png?v=1">
+    <link rel="shortcut icon" href="/media/pizzas/image.png?v=1">
+</head>
+<body>
+    <header class="navbar navbar-solid">
+        <div class="container nav-container">
+            <div class="logo">
+                <i class="fa-solid fa-fire text-primary"></i>
+                <span class="logo-text">Brasa <span class="text-primary">&</span> Brasa</span>
+            </div>
+            <nav class="nav-links">
+                <a href="{% url 'index' %}">Início</a>
+                <a href="{% url 'cardapio' %}" class="active">Cardápio</a>
+                <a href="{% url 'contato' %}">Contato</a>
+                <a href="{% url 'carrinho_detalhes' %}">Pedido</a>
+            </nav>
+            <div class="nav-actions">
+                <a href="{% url 'carrinho_detalhes' %}" class="cart-btn" aria-label="Ver pedido"><i class="fa-solid fa-bag-shopping"></i></a>
+            </div>
+        </div>
+    </header>
+
+    <section class="order-hero">
+        <div class="container">
+            <div class="badge">
+                <i class="fa-solid fa-fire"></i> Tradição e Sabor
+            </div>
+            <h1>Faça seu Pedido</h1>
+            <p>Personalize do seu jeito</p>
+        </div>
+    </section>
+
+    <section class="order-steps-section">
+        <div class="container">
+            <div class="step-card intro-card">
+                <div class="badge-sm">PEDIDO PERSONALIZADO</div>
+                <h2>Monte sua pizza em poucos passos</h2>
+                <p>Escolha o tamanho, a combinação de sabores e os adicionais com uma experiência mais elegante e clara.</p>
+            </div>
+
+            <form method="POST" action="{% url 'carrinho_adicionar_pizza' %}" id="form-pizza" onsubmit="return validarPedidoAntesDeEnviar(event)">
+                {% csrf_token %}
+                <div class="steps-grid">
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">1</div>
+                            <div class="step-title">
+                                <h3>Escolha o tamanho</h3>
+                                <p>Preço base já configurado para cada formato.</p>
+                            </div>
+                        </div>
+                        <div class="step-content">
+                            <div class="select-wrapper">
+                                <select class="custom-select" name="tamanho" id="tamanho" required onchange="calcularPreco()">
+                                    <option value="" disabled selected>Selecione...</option>
+                                    <option value="P">Pequena (P) - A partir de R$ 25,00</option>
+                                    <option value="M">Média (M) - A partir de R$ 32,00</option>
+                                    <option value="G">Grande (G) - A partir de R$ 39,00</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down select-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-number">2</div>
+                            <div class="step-title">
+                                <h3>Quantos sabores?</h3>
+                                <p id="sabores-status">Selecione a quantidade para liberar a montagem.</p>
+                            </div>
+                        </div>
+                        <div class="step-content">
+                            <div class="flavors-grid">
+                                <label class="flavor-option">
+                                    <input type="radio" name="qtd_sabores" value="1" required onchange="mostrarSabores(1)">
+                                    <div class="option-card">
+                                        <h4>1 sabor</h4>
+                                        <p>Tradicional e direto</p>
+                                    </div>
+                                </label>
+
+                                <label class="flavor-option">
+                                    <input type="radio" name="qtd_sabores" value="2" onchange="mostrarSabores(2)">
+                                    <div class="option-card">
+                                        <h4>2 sabores</h4>
+                                        <p>Meia a meia</p>
+                                    </div>
+                                </label>
+
+                                <label class="flavor-option">
+                                    <input type="radio" name="qtd_sabores" value="3" onchange="mostrarSabores(3)">
+                                    <div class="option-card">
+                                        <h4>3 sabores</h4>
+                                        <p>Mais variedade</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" name="num_sabores" id="num_sabores">
+                <div id="sabores-container" class="builder-stack"></div>
+
+                <section class="builder-panel builder-panel--accent" id="adicionais-card" style="display: none;">
+                    <div class="builder-panel__header">
+                        <span class="builder-step">3</span>
+                        <div>
+                            <h3>Adicionais e finalização</h3>
+                            <p>Extras selecionados de forma rápida, sem poluição visual.</p>
+                        </div>
+                    </div>
+
+                    <div class="addons-grid">
+                        <label class="addon-option">
+                            <input type="checkbox" name="borda_chocolate" id="borda_chocolate" onchange="controlarBordas(event); calcularPreco()">
+                            <span class="addon-option__box">
+                                <strong>Borda de Chocolate</strong>
+                                <small>P: +R$ 6 | M: +R$ 8 | G: +R$ 10</small>
+                            </span>
+                        </label>
+
+                        <label class="addon-option addon-option--select">
+                            <span class="addon-option__label">Catupiry Original por Cima</span>
+                            <select name="catupiry_cima" id="catupiry_cima" onchange="calcularPreco()">
+                                <option value="nao">Não</option>
+                                <option value="metade">Metade (P: +R$ 5 | M: +R$ 6 | G: +R$ 7)</option>
+                                <option value="inteira">Inteira (P: +R$ 10 | M: +R$ 12 | G: +R$ 14)</option>
+                            </select>
+                        </label>
+
+                        <label class="addon-option">
+                            <input type="checkbox" name="catupiry_borda" id="catupiry_borda" onchange="controlarBordas(event); calcularPreco()">
+                            <span class="addon-option__box">
+                                <strong>Catupiry Original na Borda</strong>
+                                <small>P: +R$ 10 | M: +R$ 12 | G: +R$ 14</small>
+                            </span>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="builder-panel builder-panel--drink" id="bebida-card">
+                    <div class="builder-panel__header">
+                        <span class="builder-step">4</span>
+                        <div>
+                            <h3>Quer bebida?</h3>
+                            <p>Escolha uma opção para acompanhar o pedido.</p>
+                        </div>
+                    </div>
+
+                    <div class="drink-question">
+                        <label class="drink-option">
+                            <input type="radio" name="quer_bebida" value="nao" checked onchange="toggleBebidaOptions()">
+                            <span>Não</span>
+                        </label>
+                        <label class="drink-option">
+                            <input type="radio" name="quer_bebida" value="sim" onchange="toggleBebidaOptions()">
+                            <span>Sim</span>
+                        </label>
+                    </div>
+
+                    <div id="bebida-container" style="display: none; margin-top: 18px;">
+                        <div id="bebidas-container">
+                            <div class="bebida-item">
+                                <select name="bebida_id[]" class="bebida-select" onchange="calcularPreco()">
+                                    <option value="">Selecione a bebida...</option>
+                                    {% for bebida in bebidas %}
+                                        <option value="{{ bebida.id }}">{{ bebida.nome }} - R$ {{ bebida.preco }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="adicionarBebida()">+ Adicionar nova bebida</button>
+                    </div>
+                </section>
+
+                <section class="builder-panel builder-summary" id="resumo-card" style="display: none;">
+                    <div class="builder-panel__header">
+                        <span class="builder-step">4</span>
+                        <div>
+                            <h3>Resumo do pedido</h3>
+                            <p>Conferência final antes de adicionar ao carrinho.</p>
+                        </div>
+                    </div>
+
+                    <div class="summary-box">
+                        <p id="resumo-texto"></p>
+                        <div class="summary-box__price" id="preco-final"></div>
+                    </div>
+
+                    <div class="builder-actions">
+                        <button type="submit" class="btn builder-submit">Finalizar pedido</button>
+                    </div>
+                </section>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <div class="info-bar">
+            <div class="container info-grid">
+                <div class="info-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div>
+                        <h4>Onde estamos</h4>
+                        <p>Av. Ivan Cavalcante - 21, Lucrecia RN</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <div>
+                        <h4>Telefone</h4>
+                        <p>(84) 920031436</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fa-regular fa-clock"></i>
+                    <div>
+                        <h4>Horário</h4>
+                        <p>Ter a Dom · à partir das 18h</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-footer">
+            <div class="container footer-grid">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <i class="fa-solid fa-fire text-primary"></i>
+                        <span class="logo-text">Sabor <span class="text-primary">&</span> Nordestino</span>
+                    </div>
+                    <p>Pizzas com massa de fermentação natural, assadas no forno a lenha. O sabor que acende a sua fome.</p>
+                    <div class="social-links">
+                        <a href="https://www.instagram.com/pizzariasabornordestinoo?utm_source=ig_web_button_share_sheet&amp;igsi=ZDNlZDc0MzIxNw=="><i class="fa-brands fa-instagram"></i></a>
+                        <a href="https://api.whatsapp.com/send/?phone=5584990346414&amp;text&amp;type=phone_number&amp;app_absent=0"><i class="fa-brands fa-whatsapp"></i></a>
+                    </div>
+                </div>
+
+                <div class="footer-links">
+                    <h4>Navegação</h4>
+                    <ul>
+                        <li><a href="{% url 'index' %}">Início</a></li>
+                        <li><a href="{% url 'cardapio' %}">Cardápio</a></li>
+                        <li><a href="{% url 'contato' %}">Contato</a></li>
+                        <li><a href="{% url 'painel' %}">Painel Admin</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-contact">
+                    <h4>Contato</h4>
+                    <ul>
+                        <li><i class="fa-solid fa-location-dot"></i> Av. Ivan Cavalcante - 21, Lucrecia RN</li>
+                        <li><i class="fa-solid fa-phone"></i> (84) 920031436</li>
+                        <li><i class="fa-regular fa-clock"></i> Ter a Dom · à partir das 18h</li>
+                    </ul>
+                </div>
+
+                <div class="footer-about">
+                    <h4>Sobre nós</h4>
+                    <p>Uma pizzaria artesanal feita com paixão. Ingredientes frescos, massa de fermentação natural e o aroma inconfundível do forno a lenha.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-footer">
+            <div class="container">
+                <p>&copy; 2026 Sabor_Nordestino. Todos os direitos reservados.</p>
+                <p>Feito com fogo e paixão.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const pizzas = {{ pizzas_json|safe }};
+        const pizzasEspeciais = {{ pizzas_especiais_json|safe }};
+        const form = document.getElementById('form-pizza');
+
+        function toggleBebidaOptions() {
+            const valor = document.querySelector('input[name="quer_bebida"]:checked')?.value || 'nao';
+            const bebidaContainer = document.getElementById('bebida-container');
+
+            if (valor === 'sim') {
+                bebidaContainer.style.display = 'block';
+            } else {
+                bebidaContainer.style.display = 'none';
+                resetarBebidas();
+            }
+
+            calcularPreco();
+        }
+
+        function resetarBebidas() {
+            const container = document.getElementById('bebidas-container');
+            const itens = container.querySelectorAll('.bebida-item');
+            itens.forEach((item, index) => {
+                if (index === 0) {
+                    item.querySelector('select').value = '';
+                } else {
+                    item.remove();
+                }
+            });
+        }
+
+        function adicionarBebida() {
+            const container = document.getElementById('bebidas-container');
+            const primeiro = container.querySelector('.bebida-item');
+            const novoItem = primeiro.cloneNode(true);
+            novoItem.querySelector('select').value = '';
+
+            if (!novoItem.querySelector('.bebida-remove-btn')) {
+                const removerBtn = document.createElement('button');
+                removerBtn.type = 'button';
+                removerBtn.className = 'bebida-remove-btn';
+                removerBtn.textContent = 'Remover';
+                removerBtn.onclick = function () {
+                    novoItem.remove();
+                    calcularPreco();
+                };
+                novoItem.appendChild(removerBtn);
+            }
+
+            container.appendChild(novoItem);
+        }
+
+        function validarPedidoAntesDeEnviar(event) {
+            const querBebida = document.querySelector('input[name="quer_bebida"]:checked')?.value || 'nao';
+
+            if (querBebida === 'sim') {
+                const primeiraBebida = document.querySelector('.bebida-select');
+                if (!primeiraBebida.value) {
+                    event.preventDefault();
+                    primeiraBebida.focus();
+                    primeiraBebida.reportValidity();
+                    return false;
+                }
+            }
+
+            const tamanho = document.getElementById('tamanho');
+            const saboresInputs = document.querySelectorAll('[name^="sabor_"]');
+
+            if (!tamanho.value) {
+                event.preventDefault();
+                tamanho.focus();
+                tamanho.reportValidity();
+                return false;
+            }
+
+            if (saboresInputs.length && Array.from(saboresInputs).some(input => !input.value)) {
+                event.preventDefault();
+                const primeiroVazio = Array.from(saboresInputs).find(input => !input.value);
+                if (primeiroVazio) {
+                    primeiroVazio.focus();
+                    primeiroVazio.reportValidity();
+                }
+                return false;
+            }
+
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            toggleBebidaOptions();
+        });
+
+        function mostrarSabores(num) {
+            document.getElementById('num_sabores').value = num;
+            document.getElementById('adicionais-card').style.display = 'block';
+            document.getElementById('sabores-status').textContent = `${num} sabor${num > 1 ? 'es' : ''} selecionado${num > 1 ? 's' : ''}. Agora escolha os sabores.`;
+
+            const container = document.getElementById('sabores-container');
+            container.innerHTML = '';
+
+            for (let i = 1; i <= num; i++) {
+                const card = document.createElement('div');
+                card.className = 'builder-panel flavor-panel';
+                card.innerHTML = `
+                    <div class="builder-panel__header">
+                        <span class="builder-step builder-step--soft">${i}</span>
+                        <div>
+                            <h3>Sabor ${i}</h3>
+                            <p>Selecione um sabor da lista.</p>
+                        </div>
+                    </div>
+                    <select name="sabor_${i}" id="sabor_${i}" required onchange="calcularPreco()">
+                        <option value="">Selecione...</option>
+                        ${pizzas.map(p => `<option value="${p.id}" data-especial="${p.especial}">${p.nome}</option>`).join('')}
+                    </select>
+                    <div id="ingredientes_${i}" class="flavor-panel__ingredients"></div>
+                `;
+                container.appendChild(card);
+
+                document.getElementById(`sabor_${i}`).addEventListener('change', function() {
+                    const pizzaId = this.value;
+                    const pizza = pizzas.find(p => p.id == pizzaId);
+                    document.getElementById(`ingredientes_${i}`).textContent = pizza ? pizza.ingredientes : '';
+                });
+            }
+
+            document.getElementById('resumo-card').style.display = 'block';
+        }
+
+        function calcularPreco() {
+            const tamanho = document.getElementById('tamanho').value;
+            const numSabores = parseInt(document.getElementById('num_sabores').value) || 0;
+            const resumoCard = document.getElementById('resumo-card');
+            const resumoTexto = document.getElementById('resumo-texto');
+            const precoFinal = document.getElementById('preco-final');
+
+            if (!tamanho || numSabores === 0) {
+                if (resumoCard) resumoCard.style.display = 'none';
+                return;
+            }
+
+            let sabores = [];
+            let saboresEspeciaisCount = 0;
+
+            for (let i = 1; i <= numSabores; i++) {
+                const select = document.getElementById(`sabor_${i}`);
+                if (select && select.value) {
+                    const pizza = pizzas.find(p => p.id == select.value);
+                    if (pizza) {
+                        sabores.push(pizza.nome);
+                        if (pizza.especial) saboresEspeciaisCount++;
+                    }
+                }
+            }
+
+            const precosBase = {'P': 25.00, 'M': 32.00, 'G': 39.00};
+            let preco = precosBase[tamanho];
+
+            if (saboresEspeciaisCount > 0) {
+                if (saboresEspeciaisCount === numSabores) {
+                    const adicionaisEspeciais = {'P': 4.00, 'M': 6.00, 'G': 8.00};
+                    preco += adicionaisEspeciais[tamanho];
+                } else {
+                    const adicionaisEspeciais = {'P': 2.00, 'M': 3.00, 'G': 4.00};
+                    preco += adicionaisEspeciais[tamanho];
+                }
+            }
+
+            if (document.getElementById('borda_chocolate').checked) {
+                const bordas = {'P': 6.00, 'M': 8.00, 'G': 10.00};
+                preco += bordas[tamanho];
+            }
+
+            const catupiryCima = document.getElementById('catupiry_cima').value;
+            if (catupiryCima === 'inteira') {
+                const catupiry = {'P': 10.00, 'M': 12.00, 'G': 14.00};
+                preco += catupiry[tamanho];
+            } else if (catupiryCima === 'metade') {
+                const catupiry = {'P': 5.00, 'M': 6.00, 'G': 7.00};
+                preco += catupiry[tamanho];
+            }
+
+            if (document.getElementById('catupiry_borda').checked) {
+                const catupiry = {'P': 10.00, 'M': 12.00, 'G': 14.00};
+                preco += catupiry[tamanho];
+            }
+
+            let bebidasNomes = [];
+            let bebidaPrecoTotal = 0;
+            const querBebida = document.querySelector('input[name="quer_bebida"]:checked')?.value || 'nao';
+
+            if (querBebida === 'sim') {
+                document.querySelectorAll('.bebida-select').forEach(select => {
+                    if (!select.value) return;
+                    const option = select.options[select.selectedIndex];
+                    const texto = option ? option.textContent.trim() : '';
+                    const matchPreco = texto.match(/R\$\s*([\d.,]+)/);
+                    const nome = texto.replace(/\s*-\s*R\$\s*[\d,\.]+\s*$/, '').trim();
+
+                    let valor = 0;
+                    if (matchPreco) {
+                        let bruto = matchPreco[1];
+                        if (bruto.includes(',') && bruto.includes('.')) {
+                            bruto = bruto.replace(/\./g, '').replace(',', '.');
+                        } else if (bruto.includes(',')) {
+                            bruto = bruto.replace(',', '.');
+                        }
+                        valor = Number.parseFloat(bruto) || 0;
+                    }
+
+                    if (nome) {
+                        bebidasNomes.push(nome);
+                        bebidaPrecoTotal += valor;
+                    }
+                });
+            }
+
+            const tamanhoNome = {'P': 'Pequena', 'M': 'Média', 'G': 'Grande'};
+            const linhasResumo = [];
+
+            if (sabores.length > 0) {
+                linhasResumo.push(`• Pizza ${tamanhoNome[tamanho]} - ${sabores.join(' / ')}`);
+            }
+
+            if (document.getElementById('borda_chocolate').checked) {
+                linhasResumo.push('• Borda de Chocolate');
+            }
+
+            if (document.getElementById('catupiry_borda').checked) {
+                linhasResumo.push('• Catupiry na Borda');
+            }
+
+            if (catupiryCima !== 'nao') {
+                const labelCatupiry = catupiryCima === 'metade' ? 'Catupiry por Cima (Metade)' : 'Catupiry por Cima (Inteira)';
+                linhasResumo.push(`• ${labelCatupiry}`);
+            }
+
+            if (bebidasNomes.length > 0) {
+                bebidasNomes.forEach(nome => linhasResumo.push(`• ${nome}`));
+            }
+
+            const total = preco + bebidaPrecoTotal;
+            const texto = linhasResumo.length > 0 ? linhasResumo.join('<br>') : 'Selecione o tamanho e os sabores.';
+
+            if (resumoCard) resumoCard.style.display = 'block';
+            if (resumoTexto) resumoTexto.innerHTML = texto;
+            if (precoFinal) precoFinal.textContent = `R$ ${total.toFixed(2)}`;
+        }
+
+        function controlarBordas(event) {
+            const bordaChocolate = document.getElementById('borda_chocolate');
+            const catupiryBorda = document.getElementById('catupiry_borda');
+            const origem = event ? event.target.id : null;
+
+            if (bordaChocolate.checked && catupiryBorda.checked) {
+                if (origem === 'borda_chocolate') {
+                    catupiryBorda.checked = false;
+                } else {
+                    bordaChocolate.checked = false;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+

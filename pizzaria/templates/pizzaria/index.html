@@ -1,0 +1,218 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sabor_Nordestino - Pizzaria Artesanal</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/media/pizzas/image.png?v=1">
+    <link rel="shortcut icon" href="/media/pizzas/image.png?v=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="{% static 'pizzaria/index.css' %}">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container nav-container">
+            <div class="logo">
+                <i class="fa-solid fa-fire text-primary"></i>
+                <span class="logo-text">Sabor <span class="text-primary"></span> Nordestino</span>
+            </div>
+            <nav class="nav-links">
+                <a href="{% url 'index' %}" class="active">Início</a>
+                <a href="{% url 'cardapio' %}">Cardápio</a>
+                <a href="{% url 'contato' %}">Contato</a>
+                <a href="{% url 'carrinho_detalhes' %}">Pedido</a>
+            </nav>
+            <div class="nav-actions">
+                <a href="{% url 'carrinho_detalhes' %}" class="cart-btn" aria-label="Ver pedido"><i class="fa-solid fa-bag-shopping"></i></a>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container hero-container">
+            <div class="hero-content">
+                <div class="badge">
+                    <i class="fa-solid fa-fire"></i> Forno a lenha · Massa de fermentação natural
+                </div>
+                <h1>O sabor que <span class="text-primary">acende</span> a sua fome</h1>
+                <p>Pizzas artesanais com ingredientes frescos, massa de fermentação natural por 24 horas e o aroma inconfundível do forno a lenha. Feitas com paixão, servidas com orgulho.</p>
+
+                <div class="hero-buttons">
+                    <a href="{% url 'cardapio' %}" class="btn btn-primary">Ver o Cardápio <i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="{% url 'escolher_sabores' %}" class="btn btn-secondary">Montar Pedido</a>
+                </div>
+
+                <div class="hero-info">
+                    <span class="rating"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i> 4.9 · +2.300 avaliações</span>
+                    <span class="hours"><i class="fa-regular fa-clock"></i> Aberto · 18h às 23h45</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container features-grid">
+            <div class="feature-card">
+                <div class="icon-box"><i class="fa-solid fa-fire-burner"></i></div>
+                <h3>Forno a Lenha</h3>
+                <p>Temperatura ideal para uma crosta perfeita, com aquele aroma defumado que só a lenha dá.</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon-box"><i class="fa-solid fa-pizza-slice"></i></div>
+                <h3>Massa Natural</h3>
+                <p>Fermentação de 24 horas, leve e digestiva. O segredo da nossa textura única.</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon-box"><i class="fa-solid fa-truck-fast"></i></div>
+                <h3>Entrega Rápida</h3>
+                <p>Delivery quentinho em até 40 minutos. Retirada no balcão também disponível.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="popular-menu">
+        <div class="container">
+            <div class="section-header">
+                <div>
+                    <span class="subtitle">AS QUERIDINHAS DA CASA</span>
+                    <h2>Mais Pedidas</h2>
+                </div>
+                <a href="{% url 'cardapio' %}" class="link-view-all">Ver tudo <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+
+            <div class="menu-grid">
+                <div class="menu-card">
+                    <div class="card-image">
+                        <div class="card-tag">A MAIS PEDIDA</div>
+                        <img src="/media/pizzas/nordestina.png" alt="Pizza Nordestina com carne seca e cebola">
+                    </div>
+                    <div class="card-content">
+                        <h3>Nordestina</h3>
+                        <p>Carne seca temperada, mussarela, cebola e azeitona</p>
+                        <div class="card-footer">
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-card">
+                    <div class="card-image">
+                        <div class="card-tag">CASA</div>
+                        <img src="/media/pizzas/modadochef.png" alt="Pizza Moda do Chef com ingredientes variados">
+                    </div>
+                    <div class="card-content">
+                        <h3>Moda do Chef</h3>
+                        <p>lombo canadense, mussarela, ervilha, palmito, ovo, cebola e azeitona</p>
+                        <div class="card-footer">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-card">
+                    <div class="card-image">
+                        <img src="/media/pizzas/quatroqueijos.png" alt="Pizza Quatro Queijos com vários tipos de queijo">
+                    </div>
+                    <div class="card-content">
+                        <h3>Quatro Queijos</h3>
+                        <p>Mussarela, provolone, gorgonzola e catupiry.</p>
+                        <div class="card-footer">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <div class="container cta-container">
+            <i class="fa-solid fa-medal cta-icon"></i>
+            <h2>Uma experiência que<br>dá <span class="text-primary">fome</span> só de olhar</h2>
+            <p>Peça agora e descubra por que somos a pizzaria mais amada da cidade.</p>
+            <a href="#" class="btn btn-primary">
+                <i class="fa-solid fa-fire"></i> Pedir Agora
+            </a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="info-bar">
+            <div class="container info-grid">
+                <div class="info-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div>
+                        <h4>Onde estamos</h4>
+                        <p>Av. Ivan Cavalcante - 21, Lucrecia RN</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <div>
+                        <h4>Telefone</h4>
+                        <p>(84) 920031436 </p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fa-regular fa-clock"></i>
+                    <div>
+                        <h4>Horário</h4>
+                        <p>Ter a Dom · à partir das 18h</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-footer">
+            <div class="container footer-grid">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <i class="fa-solid fa-fire text-primary"></i>
+                        <span class="logo-text">Sabor <span class="text-primary">&</span> Nordestino</span>
+                    </div>
+                    <p>Pizzas com massa de fermentação natural, assadas no forno a lenha. O sabor que acende a sua fome.</p>
+                    <div class="social-links">
+                        <a href="https://www.instagram.com/pizzariasabornordestinoo?utm_source=ig_web_button_share_sheet&igsi=ZDNlZDc0MzIxNw=="><i class="fa-brands fa-instagram"></i></a>
+                        <a href="https://api.whatsapp.com/send/?phone=5584920031436&text&type=phone_number&app_absent=0"><i class="fa-brands fa-whatsapp"></i></a>
+                    </div>
+                </div>
+
+                <div class="footer-links">
+                    <h4>Navegação</h4>
+                    <ul>
+                        <li><a href="#">Início</a></li>
+                        <li><a href="#">Cardápio</a></li>
+                        <li><a href="#">Contato</a></li>
+                        <li><a href="{% url 'painel' %}">Painel Admin</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-contact">
+                    <h4>Contato</h4>
+                    <ul>
+                        <li><i class="fa-solid fa-location-dot"></i> Av. Ivan Cavalcante - 21, Lucrecia RN</li>
+                        <li><i class="fa-solid fa-phone"></i> (84) 920031436 </li>
+                        <li><i class="fa-regular fa-clock"></i> Ter a Dom · à partir das 18h </li>
+                    </ul>
+                </div>
+
+                <div class="footer-about">
+                    <h4>Sobre nós</h4>
+                    <p>Uma pizzaria artesanal feita com paixão. Ingredientes frescos, massa de fermentação natural e o aroma inconfundível do forno a lenha.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-footer">
+            <div class="container">
+                <p>&copy; 2026 Sabor_Nordestino. Todos os direitos reservados.</p>
+                <p>Feito com fogo e paixão.</p>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

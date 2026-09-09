@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if pizza %}Editar{% else %}Nova{% endif %} Pizza - Sabor &amp; Nordestino</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Playfair+Display:ital,wght@0,600;0,700;1,600&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="/media/pizzas/image.png?v=1">
+    <link rel="shortcut icon" href="/media/pizzas/image.png?v=1">
+    <link rel="stylesheet" href="{% static 'pizzaria/gerenciar.css' %}?v=12">
+    <link rel="stylesheet" href="{% static 'pizzaria/painel_sidebar.css' %}?v=11">
+    <link rel="stylesheet" href="{% static 'pizzaria/pizza_form.css' %}?v=1">
+</head>
+<body class="admin-body">
+    <div class="admin-layout">
+        {% include 'pizzaria/partials/painel_sidebar.html' with active_page='pizzas' %}
+
+        <main class="admin-content pizza-form-content">
+            <header class="admin-header">
+                <div>
+                    <h1>{% if pizza %}Editar Pizza{% else %}Nova Pizza{% endif %}</h1>
+                    <p>{% if pizza %}Atualize os dados desta pizza no cardápio.{% else %}Cadastre uma nova pizza no cardápio.{% endif %}</p>
+                </div>
+                <a href="{% url 'painel_pizzas' %}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
+            </header>
+
+            <div class="pizza-form-card">
+                <form method="post" enctype="multipart/form-data" class="pizza-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="nome">Nome da Pizza</label>
+                        <input type="text" id="nome" name="nome" value="{% if pizza %}{{ pizza.nome }}{% endif %}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ingredientes">Ingredientes</label>
+                        <input type="text" id="ingredientes" name="ingredientes" value="{% if pizza %}{{ pizza.ingredientes }}{% endif %}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="imagem">Imagem da Pizza</label>
+                        <input type="file" id="imagem" name="imagem" accept="image/jpeg,image/png,image/webp">
+                        <small>Recomendação: imagem de 600x400 px ou 800x600 px Proporção de 3:2 ou 4:3. Formatos aceitos: JPG, PNG ou WebP.</small>
+                        {% if pizza and pizza.imagem %}<p class="current-image">Imagem atual: <a href="{{ pizza.imagem.url }}" target="_blank" rel="noopener">ver imagem</a></p>{% endif %}
+                    </div>
+
+                    <label class="checkbox-field">
+                        <input type="checkbox" name="doce" {% if pizza.categoria == 'doce' %}checked{% endif %}>
+                        <span>Pizza doce</span>
+                        <small>Desmarcada = pizza salgada</small>
+                    </label>
+
+                    <label class="checkbox-field">
+                        <input type="checkbox" name="especial" {% if pizza.especial %}checked{% endif %}>
+                        <span>Pizza especial</span>
+                        <small>Atum, Carne de Sol ou 4 Queijos</small>
+                    </label>
+
+                    {% if pizza %}
+                    <label class="checkbox-field">
+                        <input type="checkbox" name="disponivel" {% if pizza.disponivel %}checked{% endif %}>
+                        <span>Pizza disponível para venda</span>
+                    </label>
+                    {% endif %}
+
+                    <div class="pizza-form-actions">
+                        <a href="{% url 'painel_pizzas' %}" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> {% if pizza %}Salvar Alterações{% else %}Adicionar Pizza{% endif %}</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

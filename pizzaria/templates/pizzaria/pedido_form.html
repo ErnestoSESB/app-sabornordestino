@@ -1,0 +1,233 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Novo Pedido - Sabor &amp; Nordestino</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Playfair+Display:ital,wght@0,600;0,700;1,600&amp;display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/media/pizzas/image.png?v=1">
+    <link rel="shortcut icon" href="/media/pizzas/image.png?v=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'pizzaria/gerenciar.css' %}?v=12">
+    <link rel="stylesheet" href="{% static 'pizzaria/painel_sidebar.css' %}?v=11">
+</head>
+<body class="admin-body">
+    <div class="admin-layout">
+        {% include 'pizzaria/partials/painel_sidebar.html' with active_page='pedidos' %}
+
+        <main class="admin-content">
+            <header class="admin-header">
+                <div>
+                    <h1>Registrar Novo Pedido</h1>
+                    <p>Registre pedidos recebidos pelo WhatsApp.</p>
+                </div>
+                <div><a href="{% url 'painel_pedidos' %}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Voltar</a></div>
+            </header>
+
+            <div class="form-container-card">
+                <form method="post" class="admin-form" id="formPedido">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="cliente">Nome do Cliente:</label>
+                        <input type="text" id="cliente" name="cliente" class="form-control" placeholder="Nome completo" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="telefone">Telefone:</label>
+                        <input type="tel" id="telefone" name="telefone" class="form-control" placeholder="(00) 00000-0000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endereco" required>Endereço/Mesa (opcional):</label>
+                        <textarea id="endereco" name="endereco" class="form-control" rows="3" placeholder="Rua, número, bairro..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="observacao">Observação (opcional):</label>
+                        <textarea id="observacao" name="observacao" class="form-control" rows="2" placeholder="Observações do pedido..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Itens do Pedido:</label>
+                        <div id="itens-container" data-itens-container>
+                            <div class="item-builder-row">
+                                <div class="pizza-item-heading">
+                                    <strong class="pizza-item-label">Pizza 1</strong>
+                                </div>
+                                <div class="item-main-fields">
+                                    <select style="display: block; margin-top: 10px;" name="sabor_1[]" class="form-control" required >
+                                        <option value="" >1° sabor (obrigatorio)</option>
+                                        {% for pizza in pizzas %}<option value="{{ pizza.id }}">{{ pizza.nome }}</option>{% endfor %}
+                                    </select>
+                                    <select name="num_sabores[]" class="form-control js-num-sabores" onchange="atualizarCamposSabores(this)" required>
+                                        <option value="1" selected>1 sabor</option>
+                                        <option value="2">2 sabores</option>
+                                        <option value="3">3 sabores</option>
+                                    </select>
+                                    <select name="tamanho[]" class="form-control" required>
+                                        <option value="G">Grande - R$ 39,00</option>
+                                        <option value="M">Media - R$ 32,00</option>
+                                        <option value="P">Pequena - R$ 25,00</option>
+                                    </select>
+                                    <div class="quantidade-acoes">
+                                        <input type="number" name="quantidade[]" class="form-control" value="1" min="1" required>
+                                        <button type="button" class="btn btn-danger btn-remove-item" onclick="removerItem(this)" title="Remover item" aria-label="Remover item">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="extra-sabores">
+                                    <div class="sabor-extra-wrapper sabor-2-wrapper hidden">
+                                        <select name="sabor_2[]" class="form-control" disabled>
+                                            <option value="">2o sabor</option>
+                                            {% for pizza in pizzas %}<option value="{{ pizza.id }}">{{ pizza.nome }}</option>{% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="sabor-extra-wrapper sabor-3-wrapper hidden">
+                                        <select name="sabor_3[]" class="form-control" disabled>
+                                            <option value="">3o sabor</option>
+                                            {% for pizza in pizzas %}<option value="{{ pizza.id }}">{{ pizza.nome }}</option>{% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group bebidas-builder-group hidden">
+                        <label>Bebidas do Pedido:</label>
+                        <div id="bebidas-container" data-itens-container></div>
+                    </div>
+                    <button type="button" onclick="adicionarItem()" class="btn btn-secondary btn-block mb-3"><i class="fa-solid fa-plus"></i> Adicionar Pizza</button>
+                    <template id="bebida-template">
+                        <div class="bebida-builder-row">
+                            <select name="bebida_id[]" class="form-control" required>
+                                <option value="">Selecione uma bebida</option>
+                                {% for bebida in bebidas %}<option value="{{ bebida.id }}">{{ bebida.nome }} - R$ {{ bebida.preco|floatformat:2 }}</option>{% endfor %}
+                            </select>
+                            <input type="number" name="bebida_quantidade[]" class="form-control" value="1" min="1" required>
+                            <button type="button" class="btn btn-danger btn-remove-item" onclick="removerItem(this)" title="Remover bebida" aria-label="Remover bebida">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </template>
+                    <button type="button" onclick="adicionarBebida()" class="btn btn-secondary btn-block mb-3" style="display: block; margin-top: 10px;"><i class="fa-solid fa-plus"></i> Adicionar Bebida</button>
+                    <button type="submit" class="btn btn-primary btn-block" style="display: block; margin-top: 10px;">Registrar Pedido</button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function atualizarCamposSabores(selectEl) {
+            const item = selectEl.closest('.item-builder-row');
+            const quantidadeSabores = parseInt(selectEl.value || '1', 10);
+
+            const sabor2Wrapper = item.querySelector('.sabor-2-wrapper');
+            const sabor3Wrapper = item.querySelector('.sabor-3-wrapper');
+            const sabor2Select = item.querySelector('[name="sabor_2[]"]');
+            const sabor3Select = item.querySelector('[name="sabor_3[]"]');
+
+            const usarSabor2 = quantidadeSabores >= 2;
+            const usarSabor3 = quantidadeSabores >= 3;
+
+            sabor2Wrapper.classList.toggle('hidden', !usarSabor2);
+            sabor2Select.disabled = !usarSabor2;
+            sabor2Select.required = usarSabor2;
+            if (!usarSabor2) {
+                sabor2Select.selectedIndex = 0;
+            }
+
+            sabor3Wrapper.classList.toggle('hidden', !usarSabor3);
+            sabor3Select.disabled = !usarSabor3;
+            sabor3Select.required = usarSabor3;
+            if (!usarSabor3) {
+                sabor3Select.selectedIndex = 0;
+            }
+        }
+
+        function configurarItem(item) {
+            item.querySelectorAll('input[type="number"]').forEach(input => input.value = '1');
+            item.querySelectorAll('select').forEach(select => {
+                if (select.name === 'num_sabores[]') {
+                    select.value = '1';
+                } else if (select.name === 'tamanho[]') {
+                    select.value = 'G';
+                } else {
+                    select.selectedIndex = 0;
+                }
+            });
+
+            const seletorSabores = item.querySelector('.js-num-sabores');
+            if (seletorSabores) {
+                atualizarCamposSabores(seletorSabores);
+            }
+        }
+
+        function adicionarItem() {
+            const container = document.getElementById('itens-container');
+            const novoItem = container.firstElementChild.cloneNode(true);
+            configurarItem(novoItem);
+            container.appendChild(novoItem);
+            atualizarRotulosPizzas();
+            atualizarBotoesRemover(container);
+        }
+
+        function adicionarBebida() {
+            const container = document.getElementById('bebidas-container');
+            const template = document.getElementById('bebida-template');
+            const novaBebida = template.content.firstElementChild.cloneNode(true);
+            container.closest('.bebidas-builder-group').classList.remove('hidden');
+            container.appendChild(novaBebida);
+            atualizarBotoesRemover(container);
+        }
+
+        function removerItem(botao) {
+            const item = botao.closest('.item-builder-row');
+            const container = item
+                ? document.getElementById('itens-container')
+                : botao.closest('[data-itens-container]');
+            const itemParaRemover = item || botao.closest('.bebida-builder-row');
+
+            if (container.id !== 'bebidas-container' && container.children.length <= 1) {
+                return;
+            }
+
+            itemParaRemover.remove();
+            if (container.id === 'itens-container') {
+                atualizarRotulosPizzas();
+            }
+            atualizarBotoesRemover(container);
+
+            if (container.id === 'bebidas-container' && container.children.length === 0) {
+                container.closest('.bebidas-builder-group').classList.add('hidden');
+            }
+        }
+
+        function atualizarBotoesRemover(container) {
+            const itens = container.querySelectorAll('.item-builder-row, .bebida-builder-row');
+            itens.forEach(item => {
+                const botao = item.querySelector('.btn-remove-item');
+                if (container.id === 'bebidas-container') {
+                    botao.disabled = false;
+                    botao.removeAttribute('aria-disabled');
+                } else {
+                    botao.disabled = itens.length === 1;
+                    botao.setAttribute('aria-disabled', String(itens.length === 1));
+                }
+            });
+        }
+
+        function atualizarRotulosPizzas() {
+            document.querySelectorAll('#itens-container .item-builder-row').forEach((item, indice) => {
+                item.querySelector('.pizza-item-label').textContent = `Pizza ${indice + 1}`;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('#itens-container .item-builder-row').forEach(configurarItem);
+            atualizarRotulosPizzas();
+            atualizarBotoesRemover(document.getElementById('itens-container'));
+            atualizarBotoesRemover(document.getElementById('bebidas-container'));
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contato - Sabor Nordestino</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'pizzaria/index.css' %}">
+  <link rel="stylesheet" href="{% static 'pizzaria/contato.css' %}">
+</head>
+<body>
+  <header class="navbar navbar-solid">
+    <div class="container nav-container">
+      <div class="logo"><i class="fa-solid fa-fire text-primary"></i><span class="logo-text">Sabor <span class="text-primary"></span> Nordestino</span></div>
+      <nav class="nav-links" aria-label="Navegação principal">
+        <a href="{% url 'index' %}">Inicio</a>
+        <a href="{% url 'cardapio' %}">Cardapio</a>
+        <a href="{% url 'contato' %}" class="active">Contato</a>
+        <a href="{% url 'carrinho_detalhes' %}">Pedido</a>
+      </nav>
+      <div class="nav-actions"><a href="{% url 'carrinho_detalhes' %}" class="cart-btn" aria-label="Ver pedido"><i class="fa-solid fa-bag-shopping"></i></a></div>
+    </div>
+  </header>
+
+  <section class="contact-hero">
+    <div class="container">
+      <div class="badge"><i class="fa-regular fa-comment-dots"></i> Fale com a gente</div>
+      <h1>Fale Conosco</h1>
+      <p>Tem dúvidas, sugestões ou quer fazer uma reserva? Estamos aqui para ajudar.</p>
+    </div>
+  </section>
+
+  <section class="contact-section">
+    <div class="container contact-grid">
+      <div class="contact-info">
+        <div class="info-card"><div class="icon-box"><i class="fa-solid fa-location-dot"></i></div><div class="info-text"><h3>Endereço</h3><p>Av. Ivan Cavalcante - 21, Lucrecia - RN</p></div></div>
+        <div class="info-card"><div class="icon-box"><i class="fa-solid fa-phone"></i></div><div class="info-text"><h3>Telefone / WhatsApp</h3><p>(84) 99034-6414</p></div></div>
+        <div class="info-card"><div class="icon-box"><i class="fa-regular fa-clock"></i></div><div class="info-text"><h3>Horario de Funcionamento</h3><p>Terça a Domingo · 18h30 às 22h</p></div></div>
+        <div class="reservation-card"><h3>Reservas para eventos</h3><p>Aniversarios, confraternizacoes e jantares especiais. Fale conosco com antecedencia para garantir a melhor experiencia.</p></div>
+      </div>
+
+      <div class="contact-form-container">
+        <div class="form-header"><h2>Envie uma mensagem</h2><p>Responderemos pelo WhatsApp.</p></div>
+        <form action="{% url 'contato' %}" method="post" class="contact-form">
+          {% csrf_token %}
+          <div class="form-group"><label for="nome">Nome</label><input type="text" id="nome" name="nome" placeholder="Seu nome" required maxlength="100"></div>
+          <div class="form-group"><label for="telefone">Telefone (com DDD)</label><input type="tel" id="telefone" name="telefone" placeholder="(84) 99999-9999" required maxlength="20" inputmode="tel" autocomplete="tel"></div>
+          <div class="form-group"><label for="mensagem">Mensagem</label><textarea id="mensagem" name="mensagem" rows="5" placeholder="Como podemos ajudar?" required maxlength="2000"></textarea></div>
+          <button type="submit" class="btn btn-primary btn-block"><i class="fa-regular fa-paper-plane"></i> Enviar Mensagem</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <a href="https://wa.me/5584920031436" class="whatsapp-float" target="_blank" rel="noopener" aria-label="Fazer pedido pelo WhatsApp"><i class="fa-brands fa-whatsapp"></i><span class="whatsapp-text">Faça seu pedido no WhatsApp</span></a>
+
+  <footer>
+    <div class="main-footer" style="border-top: 1px solid var(--border-color);">
+      <div class="container footer-grid">
+        <div class="footer-brand"><div class="logo"><i class="fa-solid fa-fire text-primary"></i><span class="logo-text">Sabor <span class="text-primary">&amp;</span> Nordestino</span></div><p>Pizzas com massa de fermentacao natural, assadas no forno a lenha.</p><div class="social-links"><a href="https://www.instagram.com/pizzariasabornordestinoo" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a><a href="https://wa.me/5584920031436" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a></div></div>
+        <div class="footer-links"><h4>Navegacao</h4><ul><li><a href="{% url 'index' %}">Inicio</a></li><li><a href="{% url 'cardapio' %}">Cardapio</a></li><li><a href="{% url 'contato' %}">Contato</a></li><li><a href="{% url 'painel' %}">Painel Admin</a></li></ul></div>
+        <div class="footer-contact"><h4>Contato</h4><ul><li><i class="fa-solid fa-location-dot"></i> Av. Ivan Cavalcante - 21, Lucrecia RN</li><li><i class="fa-solid fa-phone"></i> (84) 920031436</li><li><i class="fa-regular fa-clock"></i> Ter a Dom · 18h30 as 22h</li></ul></div>
+        <div class="footer-about"><h4>Sobre nos</h4><p>Uma pizzaria artesanal feita com paixao, ingredientes frescos e massa de fermentacao natural.</p></div>
+      </div>
+    </div>
+    <div class="bottom-footer"><div class="container"><p>&copy; 2026 Sabor_Nordestino. Todos os direitos reservados.</p><p>Feito com fogo e paixao.</p></div></div>
+  </footer>
+</body>
+</html>

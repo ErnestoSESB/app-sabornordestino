@@ -1,0 +1,85 @@
+/* Formulario de pizza no layout administrativo */
+.pizza-form-content {
+    max-width: 900px;
+}
+
+.pizza-form-card {
+    max-width: 760px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 30px;
+}
+
+.pizza-form {
+    display: grid;
+    gap: 18px;
+}
+
+.pizza-form .form-group {
+    display: grid;
+    gap: 8px;
+}
+
+.pizza-form label {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.pizza-form input[type="text"],
+.pizza-form input[type="file"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: #161616;
+    color: var(--text-light);
+    font: inherit;
+}
+
+.pizza-form input:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+.pizza-form small,
+.current-image {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.pizza-form a {
+    color: var(--primary);
+}
+
+.checkbox-field {
+    display: flex !important;
+    align-items: center;
+    grid-template-columns: auto 1fr;
+    gap: 10px !important;
+}
+
+.checkbox-field input {
+    accent-color: var(--primary);
+}
+
+.checkbox-field small {
+    grid-column: 2;
+}
+
+.pizza-form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 6px;
+}
+
+@media (max-width: 576px) {
+    .pizza-form-card {
+        padding: 22px 18px;
+    }
+
+    .pizza-form-actions {
+        flex-direction: column;
+    }
+}

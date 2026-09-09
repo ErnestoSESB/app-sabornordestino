@@ -1,0 +1,427 @@
+/* ==========================================================================
+   Modificações de Navbar para páginas internas
+   ========================================================================== */
+.navbar-solid {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ==========================================================================
+   Hero Menor (Página Cardápio)
+   ========================================================================== */
+.menu-hero {
+  background:
+    linear-gradient(to bottom, rgba(18, 18, 18, 0.8), rgba(18, 18, 18, 1)),
+    url("https://images.unsplash.com/photo-1590947132387-155cc02f3212?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80")
+      center/cover no-repeat;
+  padding: 80px 0 40px 0;
+  text-align: center;
+}
+
+.menu-hero h1 {
+  font-family: var(--font-serif);
+  font-size: 3rem;
+  margin-bottom: 15px;
+}
+
+.menu-hero p {
+  color: var(--text-muted);
+  font-size: 1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ==========================================================================
+   Filtros e Busca
+   ========================================================================== */
+.menu-section {
+  padding: 40px 0 80px 0;
+  background-color: var(--bg-main);
+}
+
+.menu-order-action {
+  margin-top: 24px;
+  width: min(260px, 100%);
+  min-width: 220px;
+  border-radius: 999px;
+}
+
+.navbar-solid .container {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.navbar-solid .logo {
+  width: auto;
+  height: auto;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  display: flex;
+  margin: 0;
+}
+
+.navbar-solid .cart-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.main-footer .container,
+.bottom-footer .container {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.category-section {
+  margin-top: 52px;
+}
+
+.category-section:first-of-type {
+  margin-top: 0;
+}
+
+.category-heading {
+  margin-bottom: 24px;
+}
+
+.category-heading h2 {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+}
+
+.menu-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.search-bar {
+  position: relative;
+  width: 100%;
+  max-width: 350px;
+}
+
+.search-bar i {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+.search-bar input {
+  width: 100%;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-light);
+  padding: 12px 15px 12px 40px;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.search-bar input:focus {
+  border-color: var(--primary);
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+@media (max-width: 720px) {
+  .menu-hero p br {
+    display: none;
+  }
+
+  .menu-controls {
+    justify-content: center;
+  }
+
+  .filter-buttons {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-filter {
+    flex: 1 1 140px;
+  }
+
+  .category-heading h2 {
+    font-size: 1.7rem;
+  }
+
+  .navbar-solid {
+    padding: 16px 0;
+  }
+
+  .navbar-solid .nav-container {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .navbar-solid .nav-links {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    gap: 18px;
+  }
+
+  .menu-order-action {
+    width: min(240px, 100%);
+    min-width: 0;
+  }
+}
+
+.btn-filter {
+  background-color: var(--bg-card);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.btn-filter:hover {
+  color: var(--text-light);
+  border-color: var(--text-muted);
+}
+
+.btn-filter.active {
+  background-color: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* ==========================================================================
+   Ajustes no Card (Nova Tag de Categoria)
+   ========================================================================== */
+.card-category {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: var(--text-muted);
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+
+.card-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  color: var(--primary);
+  font-size: 2rem;
+}
+
+/* Ajuste no botão do cardapio para ter o icone de '+' */
+.card-footer .btn-sm i {
+  margin-right: 5px;
+}
+/* ==========================================================================
+   Banner de Informações do Cardápio (Preços e Bordas)
+   ========================================================================== */
+.menu-info-banner {
+  display: flex;
+  gap: 30px;
+  background-color: var(--bg-card);
+  padding: 25px 30px;
+  border-radius: 12px;
+  margin-bottom: 40px;
+  border: 1px solid var(--border-color);
+}
+
+.info-block {
+  flex: 1;
+}
+
+.info-block:first-child {
+  border-right: 1px solid var(--border-color);
+  padding-right: 30px;
+}
+
+.info-block h4 {
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.price-list li {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+  color: var(--text-light);
+  border-bottom: 1px dashed var(--border-color);
+  padding-bottom: 4px;
+}
+
+.price-list li:last-child {
+  border-bottom: none;
+}
+
+.price-list li .price-val {
+  color: var(--primary);
+  font-family: var(--font-serif);
+  font-weight: 700;
+}
+
+.obs-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 12px;
+  font-style: italic;
+}
+
+.border-options {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.border-badge {
+  background-color: rgba(255, 87, 34, 0.1);
+  color: var(--primary);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 87, 34, 0.2);
+}
+
+/* Responsividade para o banner */
+@media (max-width: 768px) {
+  .menu-info-banner {
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .info-block:first-child {
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    padding-right: 0;
+    padding-bottom: 20px;
+  }
+}
+
+/* ==========================================================================
+   Mobile com modo desktop ativo (Android)
+   ========================================================================== */
+@media (hover: none) and (pointer: coarse) and (min-width: 900px) {
+  .container {
+    max-width: 100%;
+    padding-left: 30px;
+    padding-right: 30px;
+  }
+
+  .navbar-solid {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 22px 0;
+    background: rgba(18, 18, 18, 0.78);
+    backdrop-filter: blur(8px);
+    z-index: 200;
+  }
+
+  .navbar-solid .nav-container {
+    gap: 20px;
+  }
+
+  .menu-hero {
+    padding: 220px 0 56px 0;
+    text-align: left;
+  }
+
+  .menu-hero h1 {
+    font-size: 4.2rem;
+  }
+
+  .menu-hero p {
+    font-size: 1.22rem;
+    max-width: 90%;
+    margin: 0;
+  }
+
+  .menu-order-action {
+    width: min(360px, 100%);
+    min-height: 68px;
+    font-size: 1.2rem;
+    margin-top: 30px;
+  }
+
+  .menu-section {
+    padding: 56px 0 92px 0;
+  }
+
+  .menu-controls {
+    margin-bottom: 34px;
+  }
+
+  .filter-buttons {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 14px;
+  }
+
+  .btn-filter {
+    font-size: 1.06rem;
+    padding: 12px 20px;
+  }
+
+  .category-heading h2 {
+    font-size: 2.6rem;
+  }
+
+  .category-section {
+    margin-top: 64px;
+  }
+
+  .menu-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 26px;
+  }
+
+  .card-image {
+    height: 280px;
+  }
+
+  .card-content {
+    padding: 24px;
+  }
+
+  .card-content h3 {
+    font-size: 1.7rem;
+  }
+
+  .card-content p {
+    font-size: 1.06rem;
+    min-height: 0;
+  }
+}

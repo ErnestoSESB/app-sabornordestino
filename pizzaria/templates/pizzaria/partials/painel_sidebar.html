@@ -1,0 +1,71 @@
+{% load static %}
+<aside class="admin-sidebar">
+    <div class="sidebar-brand">
+        <div class="logo"><i class="fa-solid fa-fire text-primary"></i><span class="logo-text">Sabor <span class="text-primary">&amp;</span> Nordestino</span></div>
+        <p class="brand-subtitle">Painel de Controle</p>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Navegação administrativa">
+        {% if not usuario_e_garcom %}
+        <div class="nav-category">Geral</div>
+        <a href="{% url 'painel' %}" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+
+        <div class="nav-category">Catálogo</div>
+        <div class="nav-submenu">
+            <a href="{% url 'painel_pizzas' %}" class="nav-item {% if active_page == 'pizzas' %}active{% endif %}"><i class="fa-solid fa-pizza-slice"></i> Gerenciar Pizzas</a>
+            <a href="{% url 'painel_bebidas' %}" class="nav-item {% if active_page == 'bebidas' %}active{% endif %}"><i class="fa-solid fa-wine-glass"></i> Gerenciar Bebidas</a>
+        </div>
+
+        <div class="nav-category">Vendas</div>
+        <div class="nav-submenu">
+            <a href="{% url 'painel_pedidos' %}" class="nav-item {% if active_page == 'pedidos' %}active{% endif %}"><i class="fa-solid fa-bell"></i> Pedidos Ativos</a>
+            <a href="{% url 'historico_pedidos' %}" class="nav-item {% if active_page == 'historico' %}active{% endif %}"><i class="fa-solid fa-clock-rotate-left"></i> Histórico de pedidos</a>
+        </div>
+        <div class="nav-category">Equipe</div>
+        <a href="{% url 'painel_garcons' %}" class="nav-item {% if active_page == 'garcons' %}active{% endif %}"><i class="fa-solid fa-users"></i> Gerenciar Garçons</a>
+        {% else %}
+        <div class="nav-category">Vendas</div>
+        <a href="{% url 'painel_pedidos' %}" class="nav-item {% if active_page == 'pedidos' %}active{% endif %}"><i class="fa-solid fa-bell"></i> Pedidos Ativos</a>
+        <a href="{% url 'historico_pedidos' %}" class="nav-item {% if active_page == 'historico' %}active{% endif %}"><i class="fa-solid fa-clock-rotate-left"></i> Histórico de pedidos</a>
+        {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="nav-item logout-btn" style="border: 0; background: transparent; width: 100%; text-align: left; cursor: pointer;">
+                <i class="fa-solid fa-right-from-bracket"></i> Sair do Painel
+            </button>
+        </form>
+        <a href="{% url 'index' %}" class="nav-item text-muted" style="margin-top: 10px; font-size: 0.85rem;"><i class="fa-solid fa-arrow-left"></i> Voltar ao Site</a>
+    </div>
+</aside>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const scrollKey = 'painel-scroll-position';
+        const content = document.querySelector('.admin-content');
+
+        if (!content) return;
+
+        const savedPosition = sessionStorage.getItem(scrollKey);
+        if (savedPosition !== null) {
+            requestAnimationFrame(function () {
+                content.scrollTop = Number(savedPosition);
+                sessionStorage.removeItem(scrollKey);
+            });
+        }
+
+        document.querySelectorAll('.sidebar-nav a[href]').forEach(function (link) {
+            link.addEventListener('click', function () {
+                sessionStorage.setItem(scrollKey, String(content.scrollTop));
+            });
+        });
+
+        document.querySelectorAll('form[action*="/status/"], form[action*="/reabrir/"]').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                sessionStorage.setItem(scrollKey, String(content.scrollTop));
+            });
+        });
+    });
+</script>

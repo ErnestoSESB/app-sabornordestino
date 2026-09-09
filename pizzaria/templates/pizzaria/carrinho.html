@@ -1,0 +1,610 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meu Pedido - Brasa & Brasa</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <link rel="stylesheet" href="{% static 'pizzaria/index.css' %}" />
+    <link rel="stylesheet" href="{% static 'pizzaria/carrinho.css' %}" />
+  </head>
+  <body>
+    <header class="navbar navbar-solid">
+      <div class="container nav-container">
+        <div class="logo">
+          <i class="fa-solid fa-fire text-primary"></i>
+          <span class="logo-text"
+            >Sabor <span class="text-primary">&</span> Nordestino</span
+          >
+        </div>
+        <nav class="nav-links">
+          <a href="{% url 'index' %}">Início</a>
+          <a href="{% url 'cardapio' %}">Cardápio</a>
+          <a href="{% url 'contato' %}">Contato</a>
+          <a href="{% url 'carrinho_detalhes' %}" class="active">Pedido</a>
+        </nav>
+        <div class="nav-actions">
+          <a
+            href="{% url 'carrinho_detalhes' %}"
+            class="cart-btn"
+            aria-label="Ver pedido"
+            ><i class="fa-solid fa-bag-shopping"></i
+          ></a>
+        </div>
+      </div>
+    </header>
+
+    <section class="checkout-hero">
+      <div class="container checkout-hero-inner">
+        <a href="{% url 'escolher_sabores' %}" class="btn-back"
+          ><i class="fa-solid fa-arrow-left"></i> Voltar</a
+        >
+        <div class="checkout-hero-copy">
+          <h1>Meu Pedido</h1>
+          <p>Revise seu pedido antes de finalizar</p>
+          <div class="badge">
+            <i class="fa-solid fa-fire"></i> Tradição e Sabor
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="checkout-section">
+      <div class="container checkout-container">
+        {% if pedidos_em_andamento and not itens %}
+        {% for pedido_em_andamento in pedidos_em_andamento %}
+        <div class="checkout-card tracking-card">
+          <div class="tracking-header">
+            <div>
+              <span class="tracking-eyebrow">Acompanhamento</span>
+              <h2>Pedido #{{ pedido_em_andamento.id|stringformat:"03d" }}</h2>
+            </div>
+            <span class="tracking-status">{{ pedido_em_andamento.status }}</span>
+          </div>
+
+          <p class="tracking-message">Pedido em andamento</p>
+
+          <div class="tracking-items">
+            {% for item in pedido_em_andamento.itens.all %}
+            <div class="tracking-item">
+              <div>
+                <strong>{{ item.quantidade }}x {% if item.item_tipo == 'bebida' %}{{ item.bebida.nome }}{% elif item.sabores_nomes %}Pizza: {{ item.sabores_nomes|join:', ' }}{% else %}{{ item.pizza.nome }}{% endif %}</strong>
+                {% if item.item_tipo == 'pizza' %}
+                <span>{% if item.tamanho == 'P' %}Pequena{% elif item.tamanho == 'M' %}Média{% else %}Grande{% endif %}</span>
+                {% if item.borda_chocolate or item.catupiry_cima != 'nao' or item.catupiry_borda %}
+                <span>Adicionais:{% if item.borda_chocolate %} Borda de Chocolate{% endif %}{% if item.catupiry_cima == 'inteira' %} Catupiry por Cima (Inteira){% endif %}{% if item.catupiry_cima == 'metade' %} Catupiry por Cima (Metade){% endif %}{% if item.catupiry_borda %} Catupiry na Borda{% endif %}</span>
+                {% endif %}
+                {% endif %}
+              </div>
+              <strong>R$ {{ item.subtotal }}</strong>
+            </div>
+            {% endfor %}
+          </div>
+
+          <div class="tracking-details">
+            <div><span>Receber em: </span><strong>{% if pedido_em_andamento.local_entrega %}{{ pedido_em_andamento.local_entrega.nome }}{% else %}Retirada no local{% endif %}</strong></div>
+            <div><span>Endereço: </span><strong>{% if pedido_em_andamento.endereco %}{{ pedido_em_andamento.endereco }}{% else %}Retirada no local{% endif %}</strong></div>
+            <div><span>Pagamento: </span><strong>{{ pedido_em_andamento.forma_pagamento }}</strong></div>
+            {% if pedido_em_andamento.observacao %}<div><span>Observações: </span><strong>{{ pedido_em_andamento.observacao }}</strong></div>{% endif %}
+          </div>
+
+          <div class="tracking-total">
+            <span>Total do pedido</span>
+            <strong>R$ {{ pedido_em_andamento.total }}</strong>
+          </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if itens %}
+        {% for item in itens %}
+        <div class="checkout-card cart-item">
+          <div class="item-header">
+            {% if item.tipo == 'bebida' %}
+              <h3>{{ item.bebida.nome }}</h3>
+              <span class="badge-sm">Bebida</span>
+            {% else %}
+              {% if item.sabores_data %}
+                <h3>{{ item.sabores_data.descricao }}</h3>
+                <span class="badge-sm">
+                  {{ item.sabores_data.num_sabores }} sabor{% if item.sabores_data.num_sabores > 1 %}es{% endif %}
+                </span>
+              {% elif item.pizza %}
+                <h3>{{ item.pizza.nome }}</h3>
+                <span class="badge-sm">Pizza</span>
+              {% endif %}
+            {% endif %}
+          </div>
+
+          {% if item.tipo == 'bebida' %}
+            <ul class="item-details">
+              <li>{{ item.bebida.nome }}</li>
+              <li>
+                <span class="label">Quantidade:</span> {{ item.quantidade }}
+              </li>
+              <li>
+                <span class="label">Preço unitário:</span> R$ {{ item.preco }}
+              </li>
+            </ul>
+          {% else %}
+            <ul class="item-details">
+              {% if item.sabores_data %}
+                {% for nome in item.sabores_data.nomes %}
+                  <li>{{ nome }}</li>
+                {% endfor %}
+              {% elif item.pizza %}
+                <li>{{ item.pizza.ingredientes }}</li>
+              {% endif %}
+
+              <li>
+                <span class="label">Tamanho:</span>
+                {% if item.tamanho == 'P' %}Pequena
+                {% elif item.tamanho == 'M' %}Média
+                {% else %}Grande{% endif %}
+              </li>
+              <li>
+                <span class="label">Quantidade:</span> {{ item.quantidade }}
+              </li>
+              <li>
+                <span class="label">Preço unitário:</span> R$ {{ item.preco }}
+              </li>
+            </ul>
+          {% endif %}
+
+          {% if item.tipo != 'bebida' and item.tem_adicionais %}
+          <div class="item-addons">
+            <p><strong>Adicionais:</strong></p>
+            <ul>
+              {% if item.borda_chocolate %}
+              <li>
+                <span>Borda de Chocolate</span>
+                <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="adicional" value="borda_chocolate" />
+                  <button type="submit" class="remove-addon-btn" aria-label="Remover borda de chocolate" title="Remover adicional">
+                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                  </button>
+                </form>
+              </li>
+              {% endif %} {% if item.catupiry_cima == 'inteira' %}
+              <li>
+                <span>Catupiry por Cima (Inteira)</span>
+                <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="adicional" value="catupiry_cima" />
+                  <button type="submit" class="remove-addon-btn" aria-label="Remover catupiry por cima" title="Remover adicional">
+                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                  </button>
+                </form>
+              </li>
+              {% endif %} {% if item.catupiry_cima == 'metade' %}
+              <li>
+                <span>Catupiry por Cima (Metade)</span>
+                <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="adicional" value="catupiry_cima" />
+                  <button type="submit" class="remove-addon-btn" aria-label="Remover catupiry por cima" title="Remover adicional">
+                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                  </button>
+                </form>
+              </li>
+              {% endif %} {% if item.catupiry_borda %}
+              <li>
+                <span>Catupiry na Borda</span>
+                <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="adicional" value="catupiry_borda" />
+                  <button type="submit" class="remove-addon-btn" aria-label="Remover catupiry na borda" title="Remover adicional">
+                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                  </button>
+                </form>
+              </li>
+              {% endif %}
+            </ul>
+          </div>
+          {% endif %}
+
+          <div class="item-subtotal">
+            <span class="label">Subtotal:</span>
+            <span class="value">R$ {{ item.total }}</span>
+          </div>
+
+          <form
+            method="post"
+            action="{% url 'carrinho_remover' item.item_id %}"
+          >
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline btn-block mt-3">
+              Remover
+            </button>
+          </form>
+        </div>
+        {% endfor %} {% endif %}
+
+        {% if itens %}
+        <div class="checkout-card order-summary">
+          <h3 class="card-title">Resumo do Pedido</h3>
+
+          {% if itens %}
+          <div class="summary-list">
+            {% for item in itens %} {% if item.tipo == 'bebida' %}
+            <div class="summary-line summary-item-line">
+              <span
+                >{{ item.bebida.nome }}{% if item.quantidade > 1 %} × {{
+                item.quantidade }}{% endif %}</span
+              >
+              <span>R$ {{ item.total }}</span>
+            </div>
+            {% else %}
+            <div class="summary-line summary-item-line">
+              <span
+                >{{ item.sabores_data.descricao|default:item.pizza.nome }}</span
+              >
+              <span>R$ {{ item.total }}</span>
+            </div>
+
+            {% if item.borda_chocolate %}
+            <div class="summary-line summary-addon-line">
+              <span>Borda de Chocolate</span>
+              <span>
+                R$ {% if item.tamanho == 'P' %}6,00{% elif item.tamanho == 'M'
+                %}8,00{% else %}10,00{% endif %}
+              </span>
+            </div>
+            {% endif %} {% if item.catupiry_cima == 'metade' %}
+            <div class="summary-line summary-addon-line">
+              <span>Catupiry por Cima (Metade)</span>
+              <span>
+                R$ {% if item.tamanho == 'P' %}5,00{% elif item.tamanho == 'M'
+                %}6,00{% else %}7,00{% endif %}
+              </span>
+            </div>
+            {% endif %} {% if item.catupiry_cima == 'inteira' %}
+            <div class="summary-line summary-addon-line">
+              <span>Catupiry por Cima (Inteira)</span>
+              <span>
+                R$ {% if item.tamanho == 'P' %}10,00{% elif item.tamanho == 'M'
+                %}12,00{% else %}14,00{% endif %}
+              </span>
+            </div>
+            {% endif %} {% if item.catupiry_borda %}
+            <div class="summary-line summary-addon-line">
+              <span>Catupiry na Borda</span>
+              <span>
+                R$ {% if item.tamanho == 'P' %}10,00{% elif item.tamanho == 'M'
+                %}12,00{% else %}14,00{% endif %}
+              </span>
+            </div>
+            {% endif %} {% endif %} {% endfor %}
+          </div>
+          {% else %}
+          <div class="summary-empty">
+            Seu pedido ainda está vazio. Adicione uma pizza ou bebida para ver o
+            resumo.
+          </div>
+          {% endif %}
+
+          <div class="summary-line">
+            <span>Subtotal:</span>
+            <span>R$ {{ carrinho.get_total }}</span>
+          </div>
+          <div class="summary-line text-primary">
+            <span>Taxa de Entrega:</span>
+            <span id="taxa-entrega">R$ 0,00</span>
+          </div>
+
+          <hr class="divider" />
+
+          <div class="summary-line total">
+            <span>Total:</span>
+            <span id="total-final">R$ {{ carrinho.get_total }}</span>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if not itens %}
+        <div class="checkout-card empty-state">
+          {% if not pedidos_em_andamento %}
+          <h3 class="card-title">Pedido Vazio</h3>
+          <p>Você ainda não adicionou nenhum item ao seu pedido.</p>
+          {% else %}
+          <h3 class="card-title">Fazer outro pedido</h3>
+          <p>Escolha mais itens para realizar um novo pedido.</p>
+          {% endif %}
+          <a href="{% url 'cardapio' %}" class="btn btn-primary btn-block mt-3"
+            >Ver Cardápio</a
+          >
+        </div>
+        {% elif itens %}
+        <div class="checkout-card delivery-form">
+          <h3 class="card-title">Dados para Entrega</h3>
+
+          <form
+            method="POST"
+            action="{% url 'carrinho_finalizar' %}"
+            class="checkout-form"
+            id="form-pedido"
+          >
+            {% csrf_token %}
+
+            <div class="form-group">
+              <label for="nome"
+                >Quem vai receber a pizza?
+                <span class="required">*</span></label
+              >
+              <input
+                type="text"
+                id="nome"
+                name="nome"
+                placeholder="Digite seu nome"
+                required
+                minlength="3"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="local_entrega">Selecione a cidade de entrega:</label>
+              <div class="select-wrapper">
+                <select
+                  class="custom-select"
+                  id="local_entrega"
+                  name="local_entrega"
+                  required
+                >
+                  <option value="" disabled selected>
+                    Selecione o local...
+                  </option>
+                  <option value="local" data-taxa="0">
+                    Retirar no local (sem taxa)
+                  </option>
+                  {% for taxa in taxas_entrega %}
+                  <option value="{{ taxa.id }}" data-taxa="{{ taxa.taxa }}">
+                    {{ taxa.nome }} - R$ {{ taxa.taxa }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="endereco"
+                >Endereço de Entrega: <span class="required">*</span></label>
+              <textarea
+                id="endereco"
+                name="endereco"
+                rows="3"
+                placeholder="Rua, número, bairro, ponto de referência..."
+                required
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="observacoes">Observações (opcional):</label>
+              <textarea
+                id="observacoes"
+                name="observacoes"
+                rows="2"
+                placeholder="Ex: Tirar cebola, borda recheada, sem azeitona..."
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="pagamento">Forma de Pagamento:</label>
+              <div class="select-wrapper">
+                <select
+                  class="custom-select"
+                  id="pagamento"
+                  name="pagamento"
+                  required
+                >
+                  <option value="" disabled selected>Selecione...</option>
+                  <option value="Dinheiro">Dinheiro</option>
+                  <option value="PIX">PIX</option>
+                  <option value="Cartão na entrega">Cartão na entrega</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="troco-container" class="form-group" style="display: none">
+              <label for="troco">Troco para quanto?</label>
+              <input
+                type="text"
+                id="troco"
+                name="troco"
+                placeholder="Ex: 50,00"
+              />
+            </div>
+
+            <a
+              href="{% url 'escolher_sabores' %}"
+              class="btn btn-secondary btn-block mb-2"
+            >
+              <i class="fa-solid fa-arrow-left"></i> Adicionar Mais Pizzas
+            </a>
+
+            <button
+              type="submit"
+              class="btn btn-primary btn-block"
+              id="btn-finalizar-app"
+            >
+              <i class="fa-solid fa-check-circle"></i> Finalizar pedido no app
+            </button>
+
+            <button
+              type="submit"
+              class="btn btn-whatsapp btn-block mt-2"
+              id="btn-finalizar"
+            >
+              <i class="fa-solid fa-check"></i> Enviar Pedido pelo WhatsApp
+            </button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+    </section>
+
+    <footer>
+      <div class="info-bar">
+        <div class="container info-grid">
+          <div class="info-item">
+            <i class="fa-solid fa-location-dot"></i>
+            <div>
+              <h4>Onde estamos</h4>
+              <p>Av. Ivan Cavalcante - 21, Lucrecia RN</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <i class="fa-solid fa-phone"></i>
+            <div>
+              <h4>Telefone</h4>
+              <p>(84) 99034-6414</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <i class="fa-regular fa-clock"></i>
+            <div>
+              <h4>Horário</h4>
+              <p>Ter a Dom · à partir das 18h</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="main-footer">
+        <div class="container footer-grid">
+          <div class="footer-brand">
+            <div class="logo">
+              <i class="fa-solid fa-fire text-primary"></i>
+              <span class="logo-text"
+                >Sabor <span class="text-primary">&</span> Nordestino</span
+              >
+            </div>
+            <p>
+              Pizzas com massa de fermentação natural, assadas no forno a lenha.
+              O sabor que acende a sua fome.
+            </p>
+            <div class="social-links">
+              <a
+                href="https://www.instagram.com/pizzariasabornordestinoo?utm_source=ig_web_button_share_sheet&igsi=ZDNlZDc0MzIxNw=="
+                ><i class="fa-brands fa-instagram"></i
+              ></a>
+              <a
+                href="https://api.whatsapp.com/send/?phone=5584990346414&text&type=phone_number&app_absent=0"
+                ><i class="fa-brands fa-whatsapp"></i
+              ></a>
+            </div>
+          </div>
+
+          <div class="footer-links">
+            <h4>Navegação</h4>
+            <ul>
+              <li><a href="{% url 'index' %}">Início</a></li>
+              <li><a href="{% url 'cardapio' %}">Cardápio</a></li>
+              <li><a href="{% url 'contato' %}">Contato</a></li>
+              <li><a href="{% url 'painel' %}">Painel Admin</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-contact">
+            <h4>Contato</h4>
+            <ul>
+              <li>
+                <i class="fa-solid fa-location-dot"></i> Av. Ivan Cavalcante -
+                21, Lucrecia RN
+              </li>
+              <li><i class="fa-solid fa-phone"></i> (84) 99034-6414</li>
+              <li>
+                <i class="fa-regular fa-clock"></i> Ter a Dom · à partir das 18h
+              </li>
+            </ul>
+          </div>
+
+          <div class="footer-about">
+            <h4>Sobre nós</h4>
+            <p>
+              Uma pizzaria artesanal feita com paixão. Ingredientes frescos,
+              massa de fermentação natural e o aroma inconfundível do forno a
+              lenha.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom-footer">
+        <div class="container">
+          <p>&copy; 2026 Sabor_Nordestino. Todos os direitos reservados.</p>
+          <p>Feito com fogo e paixão.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      const subtotal =
+        parseFloat("{{ carrinho.get_total }}".replace(",", ".")) || 0;
+
+      function atualizarResumo() {
+        const localSelect = document.getElementById("local_entrega");
+        const selectedOption = localSelect.options[localSelect.selectedIndex];
+        const taxa = parseFloat(selectedOption?.dataset.taxa || 0);
+        const totalFinal = subtotal + taxa;
+
+        const taxaEl = document.getElementById("taxa-entrega");
+        const totalEl = document.getElementById("total-final");
+
+        taxaEl.textContent = `R$ ${taxa.toFixed(2).replace(".", ",")}`;
+        totalEl.textContent = `R$ ${totalFinal.toFixed(2).replace(".", ",")}`;
+      }
+
+      document
+        .getElementById("local_entrega")
+        .addEventListener("change", atualizarResumo);
+
+      document
+        .querySelector('select[name="pagamento"]')
+        .addEventListener("change", function () {
+          const trocoContainer = document.getElementById("troco-container");
+          trocoContainer.style.display =
+            this.value === "Dinheiro" ? "block" : "none";
+        });
+
+      document
+        .getElementById("form-pedido")
+        .addEventListener("submit", function () {
+          const btn = document.getElementById("btn-finalizar");
+          btn.textContent = "Enviando...";
+          btn.disabled = true;
+        });
+
+      document
+        .querySelectorAll('form[action*="/carrinho/remover/"]')
+        .forEach(function (form) {
+          form.addEventListener("submit", function () {
+            sessionStorage.setItem(
+              "carrinho-scroll-position",
+              String(window.scrollY || document.documentElement.scrollTop || 0),
+            );
+          });
+        });
+
+      const savedScroll = sessionStorage.getItem("carrinho-scroll-position");
+      if (savedScroll !== null) {
+        window.scrollTo({ top: Number(savedScroll), behavior: "auto" });
+        sessionStorage.removeItem("carrinho-scroll-position");
+      }
+
+      atualizarResumo();
+    </script>
+  </body>
+</html>

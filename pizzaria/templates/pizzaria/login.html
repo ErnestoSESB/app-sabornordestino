@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso Restrito - Sabor &amp; Nordestino</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'pizzaria/index.css' %}">
+    <link rel="icon" type="image/png" href="/media/pizzas/image.png?v=1">
+    <link rel="shortcut icon" href="/media/pizzas/image.png?v=1">
+    <link rel="stylesheet" href="{% static 'pizzaria/login.css' %}">
+</head>
+<body>
+    <header class="navbar navbar-solid">
+        <div class="container nav-container">
+            <div class="logo">
+                <i class="fa-solid fa-fire text-primary"></i>
+                <span class="logo-text">Sabor <span class="text-primary">&amp;</span> Nordestino</span>
+            </div>
+            <nav class="nav-links" aria-label="Navegação principal">
+                <a href="{% url 'index' %}">Início</a>
+                <a href="{% url 'cardapio' %}">Cardápio</a>
+                <a href="{% url 'contato' %}">Contato</a>
+                <a href="{% url 'carrinho_detalhes' %}">Pedidos</a>
+            </nav>
+            <div class="nav-actions">
+                <a href="{% url 'carrinho_detalhes' %}" class="cart-btn" aria-label="Ver pedido"><i class="fa-solid fa-bag-shopping"></i></a>
+            </div>
+        </div>
+    </header>
+
+    <section class="login-hero">
+        <div class="container position-relative">
+            <a href="{% url 'index' %}" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
+            <div class="badge"><i class="fa-solid fa-fire"></i> Tradição e Sabor</div>
+            <h1>Acesso Restrito</h1>
+            <p>Área exclusiva do gerenciamento</p>
+        </div>
+    </section>
+
+    <section class="login-section">
+        <div class="container login-container">
+            <div class="login-card">
+                        <h2 class="login-title">Acesso ao Painel</h2>
+                {% if error %}
+                <p class="login-error">{{ error }}</p>
+                {% endif %}
+                <form method="post" class="login-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <input type="text" id="usuario" name="username" placeholder="Usuário ou E-mail" autocomplete="username" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="senha" name="password" placeholder="Senha" autocomplete="current-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block mt-2">
+                        Entrar no Painel
+                    </button>
+                </form>
+            </div>
+            <a href="{% url 'index' %}" class="btn btn-secondary btn-block mt-4" style="justify-content: center;">
+                <i class="fa-solid fa-arrow-left"></i> Voltar ao Site
+            </a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="main-footer" style="border-top: 1px solid var(--border-color);">
+            <div class="container footer-grid">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <i class="fa-solid fa-fire text-primary"></i>
+                        <span class="logo-text">Sabor <span class="text-primary">&amp;</span> Nordestino</span>
+                    </div>
+                    <p>Pizzas com massa de fermentação natural, assadas no forno a lenha. O sabor que acende a sua fome.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Navegação</h4>
+                    <ul>
+                        <li><a href="{% url 'index' %}">Início</a></li>
+                        <li><a href="{% url 'cardapio' %}">Cardápio</a></li>
+                        <li><a href="{% url 'contato' %}">Contato</a></li>
+			<li><a href="{% url 'painel' %}">Painel Admin</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Contato</h4>
+                    <ul>
+                        <li><i class="fa-solid fa-location-dot"></i> Av. Ivan Cavalcante - 21, Lucrecia RN</li>
+                        <li><i class="fa-solid fa-phone"></i> (84) 920031436</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="bottom-footer">
+            <div class="container">
+                <p>&copy; 2026 Sabor_Nordestino. Todos os direitos reservados.</p>
+                <p>Feito com fogo e paixão.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
