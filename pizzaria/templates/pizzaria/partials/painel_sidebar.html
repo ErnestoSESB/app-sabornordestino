@@ -21,8 +21,13 @@
             <a href="{% url 'painel_pedidos' %}" class="nav-item {% if active_page == 'pedidos' %}active{% endif %}"><i class="fa-solid fa-bell"></i> Pedidos Ativos</a>
             <a href="{% url 'historico_pedidos' %}" class="nav-item {% if active_page == 'historico' %}active{% endif %}"><i class="fa-solid fa-clock-rotate-left"></i> Histórico de pedidos</a>
         </div>
+        
         <div class="nav-category">Equipe</div>
-        <a href="{% url 'painel_garcons' %}" class="nav-item {% if active_page == 'garcons' %}active{% endif %}"><i class="fa-solid fa-users"></i> Gerenciar Garçons</a>
+        <div class="nav-submenu">
+            <a href="{% url 'painel_garcons' %}" class="nav-item {% if active_page == 'garcons' %}active{% endif %}"><i class="fa-solid fa-users"></i> Gerenciar Garçons</a>
+            <!-- 🌟 REPETIÇÃO DO DESIGN: Link de Motoqueiros adicionado mantendo a harmonia visual -->
+            <a href="{% url 'cadastrar_motoqueiro' %}" class="nav-item {% if active_page == 'motoqueiros' %}active{% endif %}"><i class="fa-solid fa-motorcycle"></i> Gerenciar Motoqueiros</a>
+        </div>
         {% else %}
         <div class="nav-category">Vendas</div>
         <a href="{% url 'painel_pedidos' %}" class="nav-item {% if active_page == 'pedidos' %}active{% endif %}"><i class="fa-solid fa-bell"></i> Pedidos Ativos</a>

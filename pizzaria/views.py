@@ -16,6 +16,9 @@ import json
 import uuid
 import re
 from functools import wraps
+from .models import Usuario, Motoqueiro 
+from django.views.decorators.csrf import csrf_exempt
+
 
 
 def garcom_user(user):
@@ -34,7 +37,6 @@ def dono_required(view_func):
 
 
 def _ensure_cart_device_owner(request):
-	"""Garante um identificador anônimo por cliente e isola carrinho/pedidos por sessão."""
 	cliente_token = request.session.get('cliente_token')
 	if not cliente_token:
 		cliente_token = uuid.uuid4().hex
@@ -430,6 +432,11 @@ def painel(request):
 	top_pizzas = ItemPedido.objects.values('pizza__nome').annotate(
 		total=Sum('quantidade')
 	).order_by('-total')[:5]
+
+
+	# Puxa todos os motoqueiros para listar as opções no painel
+
+	motoqueiros_lista = User.objects.filter(groups__name='Motoqueiros', is_active=True)
 	
 	context = {
 		'active_page': 'dashboard',
@@ -448,11 +455,14 @@ def painel(request):
 		'pedidos_ontem': pedidos_ontem,
 		'pedidos_semana': pedidos_semana,
 		'top_pizzas': top_pizzas,
+		'motoqueiros_disponiveis': motoqueiros_lista,
 	}
 	
 	return render(request, 'pizzaria/painel.html', context)
 
-# Gerenciar Pizzas
+
+
+
 @dono_required
 def painel_pizzas(request):
 	pizzas = Pizza.objects.all().order_by('-criado_em')
@@ -536,35 +546,37 @@ def bebida_excluir(request, bebida_id):
 def painel_pedidos(request):
 	filtro = request.GET.get('filtro', 'hoje')
 	data_especifica = request.GET.get('data', '')
-	
-	# Filtrar por data específica se fornecida
+	if garcom_user(request.user):
+		base_pedidos = Pedido.objects.filter(usuario=request.user)
+	else:
+		base_pedidos = Pedido.objects.all()
+
 	if data_especifica:
 		try:
 			from datetime import datetime
 			data_obj = datetime.strptime(data_especifica, '%Y-%m-%d').date()
-			pedidos = Pedido.objects.filter(criado_em__date=data_obj)
+			pedidos = base_pedidos.filter(criado_em__date=data_obj)
 			filtro = 'data'
 		except ValueError:
-			# Se a data for inválida, usar filtro padrão
 			data_especifica = ''
-			pedidos = Pedido.objects.filter(criado_em__date=timezone.now().date())
+			pedidos = base_pedidos.filter(criado_em__date=timezone.now().date())
 	else:
 		# Filtrar por data padrão
 		hoje = timezone.now().date()
 		if filtro == 'hoje':
-			pedidos = Pedido.objects.filter(criado_em__date=hoje)
+			pedidos = base_pedidos.filter(criado_em__date=hoje)
 		elif filtro == 'ontem':
 			ontem = hoje - timedelta(days=1)
-			pedidos = Pedido.objects.filter(criado_em__date=ontem)
+			pedidos = base_pedidos.filter(criado_em__date=ontem)
 		elif filtro == '7dias':
 			sete_dias_atras = hoje - timedelta(days=7)
-			pedidos = Pedido.objects.filter(criado_em__date__gte=sete_dias_atras)
+			pedidos = base_pedidos.filter(criado_em__date__gte=sete_dias_atras)
 		else:  # todos
-			pedidos = Pedido.objects.all()
+			pedidos = base_pedidos
 	
 	pedidos = pedidos.exclude(status='Pago').order_by('-criado_em')
 	
-	# Processar sabores para cada pedido
+	# Processar sabores para cada pedido (seu código original)
 	pedidos_processados = []
 	for pedido in pedidos:
 		itens_processados = []
@@ -583,12 +595,15 @@ def painel_pedidos(request):
 			itens_processados.append(item_data)
 		pedido.itens_processados = itens_processados
 		pedidos_processados.append(pedido)
+
+	motoqueiros_lista = User.objects.filter(groups__name='Motoqueiros', is_active=True).order_by('first_name')
 	
 	return render(request, 'pizzaria/painel_pedidos.html', {
 		'pedidos': pedidos_processados, 
 		'active_page': 'pedidos',
 		'filtro_atual': filtro,
-		'data_filtro': data_especifica
+		'data_filtro': data_especifica,
+		'motoqueiros_lista': motoqueiros_lista,
 	})
 
 @login_required(login_url='/login/')
@@ -615,11 +630,29 @@ def historico_pedidos(request):
 @dono_required
 def painel_garcons(request):
 	grupo, _ = Group.objects.get_or_create(name='Garçons')
-	garcons = User.objects.filter(groups=grupo, is_active=True).order_by('first_name', 'username')
+	garcons = User.objects.filter(groups=grupo).order_by('-is_active', 'first_name', 'username')
 	return render(request, 'pizzaria/painel_garcons.html', {
 		'garcons': garcons,
 		'active_page': 'garcons',
 	})
+
+@dono_required
+@require_POST
+def garcom_deletar_permanente(request, user_id):
+	garcom = get_object_or_404(User, id=user_id, groups__name='Garçons')
+	nome_garcom = garcom.get_full_name() or garcom.username
+	garcom.delete()
+	messages.success(request, f"O garçom {nome_garcom} foi excluído permanentemente.")
+	return redirect('painel_garcons')
+
+@dono_required
+@require_POST
+def garcom_ativar(request, user_id):
+	garcom = get_object_or_404(User, id=user_id, groups__name='Garçons')
+	garcom.is_active = True
+	garcom.save(update_fields=['is_active'])
+	messages.success(request, 'Garçom reativado com sucesso.')
+	return redirect('painel_garcons')
 
 @dono_required
 @require_POST
@@ -665,7 +698,7 @@ def pedido_reabrir(request, pedido_id):
 		messages.error(request, 'Escolha um status válido para reabrir o pedido.')
 	return redirect('historico_pedidos')
 
-@dono_required
+@login_required(login_url='/login/')
 def pedido_adicionar(request):
 	if request.method == 'POST':
 		cliente = request.POST.get('cliente')
@@ -674,6 +707,7 @@ def pedido_adicionar(request):
 		observacao = request.POST.get('observacao', '')
 		
 		pedido = Pedido.objects.create(
+			usuario=request.user,
 			cliente=cliente,
 			telefone=telefone,
 			endereco=endereco,
@@ -798,19 +832,34 @@ def pedido_adicionar(request):
 
 @login_required(login_url='/login/')
 @require_POST
+@csrf_exempt
 def pedido_alterar_status(request, pedido_id):
 	pedido = get_object_or_404(Pedido, id=pedido_id)
 	novo_status = request.POST.get('status')
+	motoqueiro_id = request.POST.get('motoqueiro_id')
+
+	# Só altera o entregador se o campo foi enviado no formulário
+	if motoqueiro_id is not None:
+		if motoqueiro_id.isdigit():
+			motoqueiro_user = get_object_or_404(User, id=int(motoqueiro_id), groups__name='Motoqueiros')
+			pedido.motoqueiro = motoqueiro_user
+		elif motoqueiro_id == "": 
+			pedido.motoqueiro = None
+
+	# Validação e gravação do status do pedido
 	status_validos = {valor for valor, _ in Pedido.STATUS_CHOICES}
 	if novo_status in status_validos:
 		pedido.status = novo_status
 		if novo_status == 'Pago':
 			pedido.fechado_em = timezone.now()
+		
+		# Salva todas as alterações juntas (Status e Entregador) de forma persistente
 		pedido.save()
+		messages.success(request, 'Pedido atualizado com sucesso!')
 	else:
 		messages.error(request, 'Status inválido para o pedido.')
+		
 	return redirect('painel_pedidos')
-
 @login_required(login_url='/login/')
 def pedido_imprimir(request, pedido_id):
 	pedido = get_object_or_404(Pedido, id=pedido_id)
@@ -858,16 +907,114 @@ def login_view(request):
 			return render(request, 'pizzaria/login.html', {'error': 'Usuário ou senha inválidos.'})
 	return render(request, 'pizzaria/login.html')
 
+def lista_motoqueiros_view(request):
+    motoqueiros = Motoqueiro.objects.all().select_related('usuario')
+    context = {
+        'motoqueiros': motoqueiros,
+        'active_page': 'motoqueiros',
+    }
+    return render(request, 'pizzaria/motoqueiro_formulario.html', context) 
+
+
+@login_required(login_url='/login/')
+@dono_required
+def cadastrar_motoqueiro_view(request):
+    if request.method == 'POST':
+        nome = request.POST.get('nome', '').strip()
+        senha = request.POST.get('senha', '').strip()
+        if not nome or not senha:
+            messages.error(request, 'Preencha todos os campos obrigatórios.')
+            return redirect('cadastrar_motoqueiro')
+        username = re.sub(r'\s+', '_', nome.lower())
+        username = re.sub(r'[^\w]', '', username)
+        if not username:
+            messages.error(request, 'Nome inválido para gerar um usuário.')
+            return redirect('cadastrar_motoqueiro')
+        if User.objects.filter(username=username).exists():
+            username = f"{username}_{User.objects.count() + 1}"
+        try:
+            user = User.objects.create_user(username=username, password=senha)
+            nome_partes = nome.split(' ', 1)
+            user.first_name = nome_partes[0]
+            if len(nome_partes) > 1:
+                user.last_name = nome_partes[1]
+            user.save()
+            grupo_motoqueiros, _ = Group.objects.get_or_create(name='Motoqueiros')
+            user.groups.add(grupo_motoqueiros)            
+            messages.success(request, f'Motoqueiro {nome} cadastrado com sucesso!')
+        except Exception as e:
+            messages.error(request, f'Erro ao cadastrar motoqueiro: {str(e)}')
+        return redirect('cadastrar_motoqueiro')
+    motoqueiros_ativos = User.objects.filter(groups__name='Motoqueiros', is_active=True).order_by('first_name')
+    motoqueiros_inativos = User.objects.filter(groups__name='Motoqueiros', is_active=False).order_by('first_name')
+    
+    context = {
+        'motoqueiros': motoqueiros_ativos,
+        'motoqueiros_inativos': motoqueiros_inativos
+    }
+    return render(request, 'pizzaria/motoqueiro_formulario.html', context)
+
+@login_required(login_url='/login/')
 @require_POST
-def logout_view(request):
-	logout(request)
-	return redirect('login')
+@csrf_exempt
+def vincular_motoqueiro_ao_pedido(request, pedido_id):
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    motoqueiro_id = request.POST.get('motoqueiro_id')
+
+    if not motoqueiro_id:
+        messages.error(request, 'Selecione um entregador válido.')
+        return redirect('painel_pedidos' if garcom_user(request.user) else 'painel')
+        
+    motoqueiro = get_object_or_404(User, id=motoqueiro_id, groups__name='Motoqueiros')
+    
+    pedido.motoqueiro_responsavel = motoqueiro 
+
+    pedido.status = "Pronto" 
+    
+    pedido.save()
+
+    messages.success(request, f'Pedido #{pedido.id} despachado com sucesso por {motoqueiro.first_name}!')
+    if garcom_user(request.user):
+        return redirect('painel_pedidos')
+    return redirect('painel')
+
+@login_required(login_url='/login/')
+@require_POST
+@csrf_exempt
+def desativar_motoqueiro_view(request, user_id):
+
+    motoqueiro = get_object_or_404(User, id=user_id, groups__name='Motoqueiros')
+    motoqueiro.is_active = False
+    motoqueiro.save()
+    messages.success(request, f'Motoqueiro desativado com sucesso!')
+    return redirect('cadastrar_motoqueiro')
+
+
+@login_required(login_url='/login/')
+@dono_required
+@require_POST
+def excluir_motoqueiro_permanente_view(request, user_id):
+    motoqueiro = get_object_or_404(User, id=user_id, groups__name='Motoqueiros')
+    nome_salvo = motoqueiro.get_full_name() or motoqueiro.username
+    motoqueiro.delete() 
+    messages.success(request, f'Motoqueiro {nome_salvo} foi excluído permanentemente.')
+    return redirect('cadastrar_motoqueiro')
+
+@login_required(login_url='/login/')
+@dono_required
+@require_POST
+@csrf_exempt
+def reativar_motoqueiro_view(request, user_id):
+
+    motoqueiro = get_object_or_404(User, id=user_id, groups__name='Motoqueiros')
+    motoqueiro.is_active = True
+    motoqueiro.save()
+    messages.success(request, f'Motoqueiro reativado com sucesso!')
+    return redirect('cadastrar_motoqueiro')
+
 
 def debug_recriar_pizzas(request):
-	"""View de debug para recriar pizzas"""
 	from django.http import HttpResponse
-	
-	# Apagar todas
 	count = Pizza.objects.count()
 	Pizza.objects.all().delete()
 	
@@ -918,3 +1065,25 @@ def debug_recriar_pizzas(request):
 		</ul>
 		<a href="/escolher-sabores/">Ir para o site</a>
 	""")
+
+def login_view(request):
+    if request.method == 'POST':
+        usuario_raw = request.POST.get('username')
+        senha_raw = request.POST.get('password')
+        user = authenticate(request, username=usuario_raw, password=senha_raw)
+        if user is not None:
+            login(request, user)
+            messages.success(request, f"Bem-vindo de volta, {user.username}!")
+            # Redireciona o garçom direto para os pedidos ativos, outros vão para o painel geral
+            if garcom_user(user):
+                return redirect('painel_pedidos')
+            return redirect('painel')
+        else:
+            messages.error(request, "Usuário ou senha inválidos.")
+    return render(request, 'pizzaria/login.html')
+
+
+def logout_view(request):
+    logout(request)
+    messages.success(request, "Você saiu do painel administrativo.")
+    return redirect('login')

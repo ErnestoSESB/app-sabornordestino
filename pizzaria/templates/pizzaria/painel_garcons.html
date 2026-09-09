@@ -5,6 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciar Garçons - Sabor &amp; Nordestino</title>
+    <!-- 🌟 CORREÇÃO CIRÚRGICA: Adicionado o carregamento de fontes igual ao de Pizzas -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Playfair+Display:ital,wght@0,600;0,700;1,600&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'pizzaria/gerenciar.css' %}?v=12">
     <link rel="stylesheet" href="{% static 'pizzaria/painel_sidebar.css' %}?v=11">
@@ -42,15 +46,28 @@
 
             <div class="items-list-grid" style="margin-top: 24px;">
                 {% for garcom in garcons %}
-                    <div class="management-card">
+                    <div class="management-card" {% if not garcom.is_active %}style="opacity: 0.6; background-color: #f8f9fa;"{% endif %}>
                         <div class="item-info">
-                            <h3>{{ garcom.get_full_name|default:garcom.username }}</h3>
+                            <h3>{{ garcom.get_full_name|default:garcom.username }} {% if not garcom.is_active %}<span class="item-desc" style="color: #dc3545;">(Inativo)</span>{% endif %}</h3>
                             <p class="item-desc">Usuário: {{ garcom.username }}</p>
                         </div>
-                        <form method="post" action="{% url 'garcom_excluir' garcom.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-user-slash"></i> Desativar</button>
-                        </form>
+                        <div class="action-buttons-group" style="display: flex; gap: 8px;">
+                            {% if garcom.is_active %}
+                                <form method="post" action="{% url 'garcom_excluir' garcom.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-user-slash"></i> Desativar</button>
+                                </form>
+                            {% else %}
+                                <form method="post" action="{% url 'garcom_ativar' garcom.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm" style="background-color: #28a745; border-color: #28a745;"><i class="fa-solid fa-user-check"></i> Reativar</button>
+                                </form>
+                            {% endif %}
+                            <form method="post" action="{% url 'garcom_deletar_permanente' garcom.id %}" onsubmit="return confirm('ATENÇÃO: Deseja realmente DELETAR PERMANENTEMENTE este garçom do sistema? Esta ação não pode ser desfeita.');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm" style="background-color: #dc3545; border-color: #dc3545;"><i class="fa-solid fa-trash"></i> Excluir</button>
+                            </form>
+                        </div>
                     </div>
                 {% empty %}
                     <div class="management-card"><p class="item-desc">Nenhum garçom cadastrado.</p></div>

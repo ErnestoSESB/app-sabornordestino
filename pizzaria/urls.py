@@ -4,6 +4,7 @@ from django.views.generic import RedirectView
 from . import views
 
 urlpatterns = [
+    # Painel do usuario
     path('', views.index, name='index'),
     path('cardapio/', views.cardapio, name='cardapio'),
     path('contato/', views.contato, name='contato'),
@@ -17,6 +18,12 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     
     # Painel do dono
+    path('painel/pedido/<int:pedido_id>/vincular/', views.vincular_motoqueiro_ao_pedido, name='vincular_motoqueiro'),
+    path('painel/motoqueiros/cadastrar/', views.cadastrar_motoqueiro_view, name='cadastrar_motoqueiro'),
+    path('painel/motoqueiros/', views.lista_motoqueiros_view, name='lista_motoqueiros'),
+    path('painel/motoqueiros/desativar/<int:user_id>/', views.desativar_motoqueiro_view, name='desativar_motoqueiro'),
+     path('painel/motoqueiros/excluir/<int:user_id>/', views.excluir_motoqueiro_permanente_view, name='excluir_motoqueiro_permanente'),
+     path('painel/motoqueiros/reativar/<int:user_id>/', views.reativar_motoqueiro_view, name='reativar_motoqueiro'),
     path('controle/', views.painel, name='painel'),
     path('painel/', RedirectView.as_view(pattern_name='painel', permanent=False)),
     path('painel/pizzas/', views.painel_pizzas, name='painel_pizzas'),
@@ -32,6 +39,8 @@ urlpatterns = [
     path('painel/garcons/', views.painel_garcons, name='painel_garcons'),
     path('painel/garcons/adicionar/', views.garcom_adicionar, name='garcom_adicionar'),
     path('painel/garcons/excluir/<int:user_id>/', views.garcom_excluir, name='garcom_excluir'),
+    path('painel/garcons/ativar/<int:user_id>/', views.garcom_ativar, name='garcom_ativar'),
+    path('painel/garcons/deletar-permanente/<int:user_id>/', views.garcom_deletar_permanente, name='garcom_deletar_permanente'),
     path('painel/pedidos/reabrir/<int:pedido_id>/', views.pedido_reabrir, name='pedido_reabrir'),
     path('painel/pedidos/adicionar/', views.pedido_adicionar, name='pedido_adicionar'),
     path('painel/pedidos/status/<int:pedido_id>/', views.pedido_alterar_status, name='pedido_alterar_status'),

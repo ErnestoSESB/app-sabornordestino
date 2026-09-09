@@ -48,6 +48,10 @@ db.sqlite3-journal
 # Secret/Environment files
 .env
 .env.local
+venv
+/venv/
+.venv
+
 
 # IDEs and Editors
 .vscode/
