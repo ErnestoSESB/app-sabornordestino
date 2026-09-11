@@ -34,14 +34,47 @@
                         <label for="cliente">Nome do Cliente:</label>
                         <input type="text" id="cliente" name="cliente" class="form-control" placeholder="Nome completo" required>
                     </div>
+                    {% if not usuario_e_garcom %}
                     <div class="form-group">
                         <label for="telefone">Telefone:</label>
                         <input type="tel" id="telefone" name="telefone" class="form-control" placeholder="(00) 00000-0000" required>
                     </div>
+                    {% endif %}
+                    {% if usuario_e_garcom %}
+                    <input type="hidden" name="local_entrega" value="local">
+                    {% else %}
                     <div class="form-group">
-                        <label for="endereco" required>Endereço/Mesa (opcional):</label>
+                        <label for="local_entrega">Local de entrega:</label>
+                        <select id="local_entrega" name="local_entrega" class="form-control" required>
+                            <option value="" selected disabled>Selecione o local...</option>
+                            <option value="local" data-taxa="0">Retirar no local (sem taxa)</option>
+                            {% for taxa in taxas_entrega %}
+                            <option value="{{ taxa.id }}" data-taxa="{{ taxa.taxa }}">{{ taxa.nome }} - R$ {{ taxa.taxa }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    {% if not usuario_e_garcom %}
+                    <div class="form-group" id="endereco-container">
+                        <label for="endereco">Endereço de entrega:</label>
                         <textarea id="endereco" name="endereco" class="form-control" rows="3" placeholder="Rua, número, bairro..."></textarea>
                     </div>
+                    {% endif %}
+                    {% if not usuario_e_garcom %}
+                    <div class="form-group">
+                        <label for="forma_pagamento">Forma de pagamento:</label>
+                        <select id="forma_pagamento" name="forma_pagamento" class="form-control" required>
+                            <option value="" selected disabled>Selecione...</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="PIX">PIX</option>
+                            <option value="Cartão na entrega">Cartão na entrega</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="troco-container" hidden>
+                        <label for="troco">Troco para quanto?</label>
+                        <input type="text" id="troco" name="troco" class="form-control" placeholder="Ex: 50,00">
+                    </div>
+                    {% endif %}
                     <div class="form-group">
                         <label for="observacao">Observação (opcional):</label>
                         <textarea id="observacao" name="observacao" class="form-control" rows="2" placeholder="Observações do pedido..."></textarea>
@@ -54,19 +87,15 @@
                                     <strong class="pizza-item-label">Pizza 1</strong>
                                 </div>
                                 <div class="item-main-fields">
-                                    <select style="display: block; margin-top: 10px;" name="sabor_1[]" class="form-control" required >
-                                        <option value="" >1° sabor (obrigatorio)</option>
-                                        {% for pizza in pizzas %}<option value="{{ pizza.id }}">{{ pizza.nome }}</option>{% endfor %}
+                                    <select name="tamanho[]" class="form-control" required>
+                                        <option value="G">Grande - R$ 39,00</option>
+                                        <option value="M">Media - R$ 32,00</option>
+                                        <option value="P">Pequena - R$ 25,00</option>
                                     </select>
                                     <select name="num_sabores[]" class="form-control js-num-sabores" onchange="atualizarCamposSabores(this)" required>
                                         <option value="1" selected>1 sabor</option>
                                         <option value="2">2 sabores</option>
                                         <option value="3">3 sabores</option>
-                                    </select>
-                                    <select name="tamanho[]" class="form-control" required>
-                                        <option value="G">Grande - R$ 39,00</option>
-                                        <option value="M">Media - R$ 32,00</option>
-                                        <option value="P">Pequena - R$ 25,00</option>
                                     </select>
                                     <div class="quantidade-acoes">
                                         <input type="number" name="quantidade[]" class="form-control" value="1" min="1" required>
@@ -75,19 +104,54 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div class="extra-sabores">
+                                <div class="sabor-fields">
+                                    <div class="sabor-field">
+                                        <label for="sabor-1-0">Sabor 1</label>
+                                        <select id="sabor-1-0" name="sabor_1[]" class="form-control" required>
+                                            <option value="">Escolha o sabor</option>
+                                            {% for pizza in pizzas %}<option value="{{ pizza.id }}" data-especial="{{ pizza.especial|yesno:'1,0' }}">{{ pizza.nome }}</option>{% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="extra-sabores">
                                     <div class="sabor-extra-wrapper sabor-2-wrapper hidden">
-                                        <select name="sabor_2[]" class="form-control" disabled>
-                                            <option value="">2o sabor</option>
-                                            {% for pizza in pizzas %}<option value="{{ pizza.id }}">{{ pizza.nome }}</option>{% endfor %}
+                                        <label for="sabor-2-0">Sabor 2</label>
+                                        <select id="sabor-2-0" name="sabor_2[]" class="form-control" disabled>
+                                            <option value="">Escolha o sabor</option>
+                                            {% for pizza in pizzas %}<option value="{{ pizza.id }}" data-especial="{{ pizza.especial|yesno:'1,0' }}">{{ pizza.nome }}</option>{% endfor %}
                                         </select>
                                     </div>
                                     <div class="sabor-extra-wrapper sabor-3-wrapper hidden">
-                                        <select name="sabor_3[]" class="form-control" disabled>
-                                            <option value="">3o sabor</option>
-                                            {% for pizza in pizzas %}<option value="{{ pizza.id }}">{{ pizza.nome }}</option>{% endfor %}
+                                        <label for="sabor-3-0">Sabor 3</label>
+                                        <select id="sabor-3-0" name="sabor_3[]" class="form-control" disabled>
+                                            <option value="">Escolha o sabor</option>
+                                            {% for pizza in pizzas %}<option value="{{ pizza.id }}" data-especial="{{ pizza.especial|yesno:'1,0' }}">{{ pizza.nome }}</option>{% endfor %}
                                         </select>
                                     </div>
+                                    </div>
+                                </div>
+                                <div class="pizza-addons">
+                                    <div class="pizza-addons-heading">Adicionais da pizza</div>
+                                    <div class="sabor-field">
+                                        <label for="borda-tipo-0">Borda</label>
+                                        <select id="borda-tipo-0" name="borda_tipo[]" class="form-control">
+                                            <option value="catupiry">Catupiry (+R$ 0,00)</option>
+                                            <option value="cheddar">Cheddar (+R$ 0,00)</option>
+                                            <option value="sem_borda">Sem borda (+R$ 0,00)</option>
+                                            <option value="catupiry_original">Catupiry Original (+R$ 10,00 a R$ 14,00)</option>
+                                            <option value="chocolate">Chocolate (+R$ 6,00 a R$ 10,00)</option>
+                                        </select>
+                                    </div>
+                                    <div class="sabor-field">
+                                        <label for="catupiry-cima-0">Catupiry Original por cima</label>
+                                        <select id="catupiry-cima-0" name="catupiry_cima[]" class="form-control">
+                                            <option value="nao">Não</option>
+                                            <option value="metade">Metade (+R$ 5 a R$ 7)</option>
+                                            <option value="inteira">Inteira (+R$ 10 a R$ 14)</option>
+                                        </select>
+                                    </div>
+                                <div class="pizza-price" aria-live="polite">
+                                    Total da pizza: <strong>R$ 39,00</strong>
+                                </div>
                                 </div>
                             </div>
                         </div>
@@ -142,6 +206,60 @@
             if (!usarSabor3) {
                 sabor3Select.selectedIndex = 0;
             }
+
+            calcularPrecoPizza(item);
+        }
+
+        function calcularPrecoPizza(item) {
+            const tamanho = item.querySelector('[name="tamanho[]"]').value;
+            const quantidade = parseInt(item.querySelector('[name="quantidade[]"]').value || '1', 10) || 1;
+            const numSabores = parseInt(item.querySelector('[name="num_sabores[]"]').value || '1', 10);
+            const precosBase = { P: 25, M: 32, G: 39 };
+            const adicionaisEspeciais = {
+                parcial: { P: 2, M: 3, G: 4 },
+                total: { P: 4, M: 6, G: 8 },
+            };
+            let preco = precosBase[tamanho] || 39;
+            const sabores = Array.from(item.querySelectorAll('[name="sabor_1[]"], [name="sabor_2[]"], [name="sabor_3[]"]'))
+                .filter(select => !select.disabled && select.value);
+            const especiais = sabores.filter(select => select.options[select.selectedIndex]?.dataset.especial === '1').length;
+
+            if (especiais > 0) {
+                const tabela = especiais === sabores.length ? adicionaisEspeciais.total : adicionaisEspeciais.parcial;
+                preco += tabela[tamanho] || 0;
+            }
+
+            const bordaTipo = item.querySelector('[name="borda_tipo[]"]').value;
+            const catupiryCima = item.querySelector('[name="catupiry_cima[]"]').value;
+            const bordasChocolate = { P: 6, M: 8, G: 10 };
+            const catupiryMetade = { P: 5, M: 6, G: 7 };
+            const catupiryInteira = { P: 10, M: 12, G: 14 };
+
+            const bordaSelect = item.querySelector('[name="borda_tipo[]"]');
+            const catupiryCimaSelect = item.querySelector('[name="catupiry_cima[]"]');
+            const bordaValores = {
+                catupiry: 'Catupiry (+R$ 0,00)',
+                cheddar: 'Cheddar (+R$ 0,00)',
+                sem_borda: 'Sem borda (+R$ 0,00)',
+                catupiry_original: `Catupiry Original (+R$ ${(catupiryInteira[tamanho] || 0).toFixed(2).replace('.', ',')})`,
+                chocolate: `Chocolate (+R$ ${(bordasChocolate[tamanho] || 0).toFixed(2).replace('.', ',')})`,
+            };
+            Array.from(bordaSelect.options).forEach(option => {
+                option.textContent = bordaValores[option.value] || option.textContent;
+            });
+            catupiryCimaSelect.options[0].textContent = 'Não (+R$ 0)';
+            catupiryCimaSelect.options[1].textContent = `Metade (+R$ ${(catupiryMetade[tamanho] || 0).toFixed(2).replace('.', ',')})`;
+            catupiryCimaSelect.options[2].textContent = `Inteira (+R$ ${(catupiryInteira[tamanho] || 0).toFixed(2).replace('.', ',')})`;
+            if (bordaTipo === 'chocolate') preco += bordasChocolate[tamanho] || 0;
+            if (bordaTipo === 'catupiry_original') preco += catupiryInteira[tamanho] || 0;
+            if (catupiryCima === 'metade') preco += catupiryMetade[tamanho] || 0;
+            if (catupiryCima === 'inteira') preco += catupiryInteira[tamanho] || 0;
+
+            const total = preco * quantidade;
+            const totalEl = item.querySelector('.pizza-price strong');
+            if (totalEl) {
+                totalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+            }
         }
 
         function configurarItem(item) {
@@ -160,6 +278,13 @@
             if (seletorSabores) {
                 atualizarCamposSabores(seletorSabores);
             }
+
+            item.querySelectorAll('select, input[type="number"]').forEach(campo => {
+                campo.addEventListener('change', () => calcularPrecoPizza(item));
+                campo.addEventListener('input', () => calcularPrecoPizza(item));
+            });
+
+            calcularPrecoPizza(item);
         }
 
         function adicionarItem() {
@@ -219,10 +344,52 @@
         function atualizarRotulosPizzas() {
             document.querySelectorAll('#itens-container .item-builder-row').forEach((item, indice) => {
                 item.querySelector('.pizza-item-label').textContent = `Pizza ${indice + 1}`;
+
+                [
+                    ['sabor_1[]', 'sabor'],
+                    ['sabor_2[]', 'sabor'],
+                    ['sabor_3[]', 'sabor'],
+                    ['borda_tipo[]', 'borda-tipo'],
+                    ['catupiry_cima[]', 'catupiry-cima'],
+                ].forEach(([nome, prefixo], campoIndice) => {
+                    const select = item.querySelector(`[name="${nome}"]`);
+                    const label = select?.previousElementSibling;
+                    if (select && label) {
+                        const id = `${prefixo}-${campoIndice + 1}-${indice}`;
+                        select.id = id;
+                        label.htmlFor = id;
+                    }
+                });
             });
         }
 
         document.addEventListener('DOMContentLoaded', function () {
+            const localEntrega = document.getElementById('local_entrega');
+            const enderecoContainer = document.getElementById('endereco-container');
+            const endereco = document.getElementById('endereco');
+            const formaPagamento = document.getElementById('forma_pagamento');
+            const trocoContainer = document.getElementById('troco-container');
+
+            function atualizarCamposPedido() {
+                const retirada = localEntrega.value === 'local';
+                if (enderecoContainer && endereco) {
+                    enderecoContainer.hidden = retirada;
+                    endereco.required = !retirada;
+                }
+                if (retirada && endereco) {
+                    endereco.value = '';
+                }
+                if (formaPagamento && trocoContainer) {
+                    trocoContainer.hidden = formaPagamento.value !== 'Dinheiro';
+                }
+            }
+
+            if (localEntrega) {
+                localEntrega.addEventListener('change', atualizarCamposPedido);
+            }
+            if (formaPagamento) {
+                formaPagamento.addEventListener('change', atualizarCamposPedido);
+            }
             document.querySelectorAll('#itens-container .item-builder-row').forEach(configurarItem);
             atualizarRotulosPizzas();
             atualizarBotoesRemover(document.getElementById('itens-container'));

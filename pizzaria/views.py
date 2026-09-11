@@ -5,10 +5,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.utils import timezone
-from django.db.models import Case, IntegerField, Value, When
+from django.db.models import Case, IntegerField, Q, Value, When
 from datetime import datetime, timedelta
 from html import unescape
-from .models import Pizza, Pedido, ItemPedido, Bebida
+from .models import Pizza, Pedido, ItemPedido, Bebida, TaxaEntrega
 from .carrinho import Carrinho
 from .calculadora_preco import calcular_preco_pizza
 from urllib.parse import quote
@@ -16,6 +16,9 @@ import json
 import uuid
 import re
 from functools import wraps
+from .models import Usuario, Motoqueiro 
+from django.views.decorators.csrf import csrf_exempt
+
 
 
 def garcom_user(user):
@@ -34,7 +37,6 @@ def dono_required(view_func):
 
 
 def _ensure_cart_device_owner(request):
-	"""Garante um identificador anônimo por cliente e isola carrinho/pedidos por sessão."""
 	cliente_token = request.session.get('cliente_token')
 	if not cliente_token:
 		cliente_token = uuid.uuid4().hex
@@ -138,6 +140,9 @@ def carrinho_adicionar_pizza(request):
 		borda_chocolate = request.POST.get('borda_chocolate') == 'on'
 		catupiry_cima = request.POST.get('catupiry_cima', 'nao')
 		catupiry_borda = request.POST.get('catupiry_borda') == 'on'
+		borda_tipo = request.POST.get('borda_tipo', 'catupiry')
+		if borda_tipo not in {'catupiry', 'cheddar', 'sem_borda', 'catupiry_original', 'chocolate'}:
+			borda_tipo = 'catupiry'
 		
 		# Coletar sabores
 		sabores_ids = []
@@ -163,7 +168,8 @@ def carrinho_adicionar_pizza(request):
 			total_sabores=num_sabores,
 			borda_chocolate=borda_chocolate,
 			catupiry_cima=catupiry_cima,
-			catupiry_borda=catupiry_borda
+			catupiry_borda=catupiry_borda,
+			borda_tipo=borda_tipo
 		)
 		
 		# Criar descrição
@@ -182,6 +188,7 @@ def carrinho_adicionar_pizza(request):
 			borda_chocolate=borda_chocolate,
 			catupiry_cima=catupiry_cima,
 			catupiry_borda=catupiry_borda,
+			borda_tipo=borda_tipo,
 			sabores=json.dumps({
 				'num_sabores': num_sabores,
 				'ids': sabores_ids,
@@ -231,8 +238,10 @@ def carrinho_detalhes(request):
 		'Lucrécia',
 		'Lucrécia (Sitio)',
 		'Três Altos',
+		'Fogueteiro',
+		'Baixio de Onça',
+		'Frutuoso Gomes',
 		'Almino Afonso',
-		'Frutuoso Gomes'
 	]
 	
 	# Buscar taxas ativas e ordenar manualmente
@@ -254,6 +263,7 @@ def carrinho_detalhes(request):
 			'borda_chocolate': item.get('borda_chocolate', False),
 			'catupiry_cima': item.get('catupiry_cima', 'nao'),
 			'catupiry_borda': item.get('catupiry_borda', False),
+			'borda_tipo': item.get('borda_tipo', 'catupiry'),
 			'tem_adicionais': (
 				item.get('borda_chocolate', False)
 				or item.get('catupiry_cima', 'nao') != 'nao'
@@ -353,7 +363,8 @@ def carrinho_finalizar(request):
 			tamanho=item.get('tamanho', 'G'),
 			borda_chocolate=item.get('borda_chocolate', False),
 			catupiry_cima=item.get('catupiry_cima', 'nao'),
-			catupiry_borda=item.get('catupiry_borda', False)
+			catupiry_borda=item.get('catupiry_borda', False),
+			borda_tipo=item.get('borda_tipo', 'catupiry')
 		)
 	
 	# Limpar carrinho após finalizar
@@ -430,6 +441,11 @@ def painel(request):
 	top_pizzas = ItemPedido.objects.values('pizza__nome').annotate(
 		total=Sum('quantidade')
 	).order_by('-total')[:5]
+
+
+	# Puxa todos os motoqueiros para listar as opções no painel
+
+	motoqueiros_lista = User.objects.filter(groups__name='Motoqueiros', is_active=True)
 	
 	context = {
 		'active_page': 'dashboard',
@@ -448,11 +464,14 @@ def painel(request):
 		'pedidos_ontem': pedidos_ontem,
 		'pedidos_semana': pedidos_semana,
 		'top_pizzas': top_pizzas,
+		'motoqueiros_disponiveis': motoqueiros_lista,
 	}
 	
 	return render(request, 'pizzaria/painel.html', context)
 
-# Gerenciar Pizzas
+
+
+
 @dono_required
 def painel_pizzas(request):
 	pizzas = Pizza.objects.all().order_by('-criado_em')
@@ -536,35 +555,49 @@ def bebida_excluir(request, bebida_id):
 def painel_pedidos(request):
 	filtro = request.GET.get('filtro', 'hoje')
 	data_especifica = request.GET.get('data', '')
-	
-	# Filtrar por data específica se fornecida
+
+	def pedidos_do_dia(queryset, data):
+		inicio = timezone.make_aware(datetime.combine(data, datetime.min.time()))
+		fim = inicio + timedelta(days=1)
+		return queryset.filter(
+			Q(criado_em__gte=inicio, criado_em__lt=fim) |
+			Q(reaberto_em__gte=inicio, reaberto_em__lt=fim)
+		)
+
+	if garcom_user(request.user):
+		base_pedidos = Pedido.objects.filter(usuario=request.user)
+	else:
+		base_pedidos = Pedido.objects.all()
+	base_pedidos = base_pedidos.select_related('usuario', 'local_entrega')
+
 	if data_especifica:
 		try:
-			from datetime import datetime
 			data_obj = datetime.strptime(data_especifica, '%Y-%m-%d').date()
-			pedidos = Pedido.objects.filter(criado_em__date=data_obj)
+			pedidos = pedidos_do_dia(base_pedidos, data_obj)
 			filtro = 'data'
 		except ValueError:
-			# Se a data for inválida, usar filtro padrão
 			data_especifica = ''
-			pedidos = Pedido.objects.filter(criado_em__date=timezone.now().date())
+			pedidos = pedidos_do_dia(base_pedidos, timezone.localdate())
 	else:
 		# Filtrar por data padrão
-		hoje = timezone.now().date()
+		hoje = timezone.localdate()
 		if filtro == 'hoje':
-			pedidos = Pedido.objects.filter(criado_em__date=hoje)
+			pedidos = pedidos_do_dia(base_pedidos, hoje)
 		elif filtro == 'ontem':
 			ontem = hoje - timedelta(days=1)
-			pedidos = Pedido.objects.filter(criado_em__date=ontem)
+			pedidos = pedidos_do_dia(base_pedidos, ontem)
 		elif filtro == '7dias':
 			sete_dias_atras = hoje - timedelta(days=7)
-			pedidos = Pedido.objects.filter(criado_em__date__gte=sete_dias_atras)
+			inicio = timezone.make_aware(datetime.combine(sete_dias_atras, datetime.min.time()))
+			pedidos = base_pedidos.filter(
+				Q(criado_em__gte=inicio) | Q(reaberto_em__gte=inicio)
+			)
 		else:  # todos
-			pedidos = Pedido.objects.all()
+			pedidos = base_pedidos
 	
 	pedidos = pedidos.exclude(status='Pago').order_by('-criado_em')
 	
-	# Processar sabores para cada pedido
+	# Processar sabores para cada pedido (seu código original)
 	pedidos_processados = []
 	for pedido in pedidos:
 		itens_processados = []
@@ -582,19 +615,25 @@ def painel_pedidos(request):
 					pass
 			itens_processados.append(item_data)
 		pedido.itens_processados = itens_processados
+		pedido.cadastrado_por_garcom = bool(
+			pedido.usuario and pedido.usuario.groups.filter(name='Garçons').exists()
+		)
 		pedidos_processados.append(pedido)
+
+	motoqueiros_lista = User.objects.filter(groups__name='Motoqueiros', is_active=True).order_by('first_name')
 	
 	return render(request, 'pizzaria/painel_pedidos.html', {
 		'pedidos': pedidos_processados, 
 		'active_page': 'pedidos',
 		'filtro_atual': filtro,
-		'data_filtro': data_especifica
+		'data_filtro': data_especifica,
+		'motoqueiros_lista': motoqueiros_lista,
 	})
 
 @login_required(login_url='/login/')
 def historico_pedidos(request):
 	data_filtro = request.GET.get('data', '')
-	pedidos = Pedido.objects.all()
+	pedidos = Pedido.objects.select_related('usuario', 'local_entrega').all()
 	if data_filtro:
 		try:
 			data_obj = datetime.strptime(data_filtro, '%Y-%m-%d').date()
@@ -603,6 +642,9 @@ def historico_pedidos(request):
 			data_filtro = ''
 	pedidos = pedidos.prefetch_related('itens__pizza', 'itens__bebida').order_by('-criado_em')
 	for pedido in pedidos:
+		pedido.cadastrado_por_garcom = bool(
+			pedido.usuario and pedido.usuario.groups.filter(name='Garçons').exists()
+		)
 		for item in pedido.itens.all():
 			item.sabores_nomes = []
 			if item.sabores:
@@ -610,16 +652,39 @@ def historico_pedidos(request):
 					item.sabores_nomes = json.loads(unescape(item.sabores)).get('nomes', [])
 				except (TypeError, ValueError):
 					pass
-	return render(request, 'pizzaria/historico_pedidos.html', {'pedidos': pedidos, 'data_filtro': data_filtro, 'active_page': 'historico'})
+	return render(request, 'pizzaria/historico_pedidos.html', {
+		'pedidos': pedidos,
+		'data_filtro': data_filtro,
+		'active_page': 'historico',
+		'usuario_e_garcom': garcom_user(request.user),
+	})
 
 @dono_required
 def painel_garcons(request):
 	grupo, _ = Group.objects.get_or_create(name='Garçons')
-	garcons = User.objects.filter(groups=grupo, is_active=True).order_by('first_name', 'username')
+	garcons = User.objects.filter(groups=grupo).order_by('-is_active', 'first_name', 'username')
 	return render(request, 'pizzaria/painel_garcons.html', {
 		'garcons': garcons,
 		'active_page': 'garcons',
 	})
+
+@dono_required
+@require_POST
+def garcom_deletar_permanente(request, user_id):
+	garcom = get_object_or_404(User, id=user_id, groups__name='Garçons')
+	nome_garcom = garcom.get_full_name() or garcom.username
+	garcom.delete()
+	messages.success(request, f"O garçom {nome_garcom} foi excluído permanentemente.")
+	return redirect('painel_garcons')
+
+@dono_required
+@require_POST
+def garcom_ativar(request, user_id):
+	garcom = get_object_or_404(User, id=user_id, groups__name='Garçons')
+	garcom.is_active = True
+	garcom.save(update_fields=['is_active'])
+	messages.success(request, 'Garçom reativado com sucesso.')
+	return redirect('painel_garcons')
 
 @dono_required
 @require_POST
@@ -665,19 +730,53 @@ def pedido_reabrir(request, pedido_id):
 		messages.error(request, 'Escolha um status válido para reabrir o pedido.')
 	return redirect('historico_pedidos')
 
-@dono_required
+@login_required(login_url='/login/')
 def pedido_adicionar(request):
 	if request.method == 'POST':
-		cliente = request.POST.get('cliente')
-		telefone = request.POST.get('telefone')
-		endereco = request.POST.get('endereco', '')
-		observacao = request.POST.get('observacao', '')
+		cliente = request.POST.get('cliente', '').strip()
+		telefone = request.POST.get('telefone', '').strip()
+		endereco = request.POST.get('endereco', '').strip()
+		observacao = request.POST.get('observacao', '').strip()
+		local_entrega_id = request.POST.get('local_entrega', '')
+		if garcom_user(request.user):
+			local_entrega_id = 'local'
+		forma_pagamento = request.POST.get('forma_pagamento', '').strip()
+		troco = request.POST.get('troco', '').strip()
+
+		pagamentos_validos = {'Dinheiro', 'PIX', 'Cartão na entrega'}
+		if not garcom_user(request.user) and forma_pagamento not in pagamentos_validos:
+			messages.error(request, 'Selecione uma forma de pagamento válida.')
+			return redirect('pedido_adicionar')
+		if garcom_user(request.user) and forma_pagamento and forma_pagamento not in pagamentos_validos:
+			messages.error(request, 'Selecione uma forma de pagamento válida.')
+			return redirect('pedido_adicionar')
+		if not local_entrega_id:
+			messages.error(request, 'Selecione o local de entrega.')
+			return redirect('pedido_adicionar')
+
+		local_entrega = None
+		taxa_entrega = 0
+		if local_entrega_id != 'local':
+			if not endereco and not garcom_user(request.user):
+				messages.error(request, 'Informe o endereço de entrega.')
+				return redirect('pedido_adicionar')
+			try:
+				local_entrega = TaxaEntrega.objects.get(id=local_entrega_id, ativo=True)
+				taxa_entrega = local_entrega.taxa
+			except (TaxaEntrega.DoesNotExist, ValueError):
+				messages.error(request, 'Local de entrega inválido. Selecione novamente.')
+				return redirect('pedido_adicionar')
 		
 		pedido = Pedido.objects.create(
+			usuario=request.user,
 			cliente=cliente,
 			telefone=telefone,
 			endereco=endereco,
 			observacao=observacao,
+			forma_pagamento=forma_pagamento,
+			troco=troco,
+			local_entrega=local_entrega,
+			taxa_entrega=taxa_entrega,
 			total=0
 		)
 		
@@ -691,6 +790,10 @@ def pedido_adicionar(request):
 		sabores_3_ids = request.POST.getlist('sabor_3[]')
 		quantidades = request.POST.getlist('quantidade[]')
 		tamanhos = request.POST.getlist('tamanho[]')
+		bordas_chocolate = request.POST.getlist('borda_chocolate[]')
+		bordas_tipo = request.POST.getlist('borda_tipo[]')
+		catupiry_cima_lista = request.POST.getlist('catupiry_cima[]')
+		catupiry_borda_lista = request.POST.getlist('catupiry_borda[]')
 		bebidas_ids = request.POST.getlist('bebida_id[]')
 		bebidas_quantidades = request.POST.getlist('bebida_quantidade[]')
 
@@ -706,6 +809,22 @@ def pedido_adicionar(request):
 			tamanho = valor_da_lista(tamanhos, i, 'G')
 			if tamanho not in {'P', 'M', 'G'}:
 				tamanho = 'G'
+			borda_chocolate = valor_da_lista(bordas_chocolate, i) in {'sim', 'on', '1'}
+			borda_tipo = valor_da_lista(bordas_tipo, i, 'catupiry')
+			if borda_tipo == 'catupiry' and valor_da_lista(bordas_chocolate, i) in {'sim', 'on', '1'}:
+				borda_tipo = 'chocolate'
+			elif borda_tipo == 'catupiry' and valor_da_lista(catupiry_borda_lista, i) in {'sim', 'on', '1'}:
+				borda_tipo = 'catupiry_original'
+			if borda_tipo not in {'catupiry', 'cheddar', 'sem_borda', 'catupiry_original', 'chocolate'}:
+				borda_tipo = 'catupiry'
+			if borda_tipo in {'chocolate', 'catupiry_original'}:
+				borda_chocolate = borda_tipo == 'chocolate'
+			catupiry_cima = valor_da_lista(catupiry_cima_lista, i, 'nao')
+			if catupiry_cima not in {'nao', 'metade', 'inteira'}:
+				catupiry_cima = 'nao'
+			catupiry_borda = valor_da_lista(catupiry_borda_lista, i) in {'sim', 'on', '1'}
+			if borda_chocolate:
+				catupiry_borda = False
 
 			try:
 				quantidade = max(1, int(quantidade_raw))
@@ -737,9 +856,10 @@ def pedido_adicionar(request):
 				tamanho=tamanho,
 				sabores_especiais_count=sabores_especiais_count,
 				total_sabores=total_sabores,
-				borda_chocolate=False,
-				catupiry_cima='nao',
-				catupiry_borda=False
+				borda_chocolate=borda_chocolate,
+				catupiry_cima=catupiry_cima,
+				catupiry_borda=catupiry_borda
+				,borda_tipo=borda_tipo
 			)
 
 			sabores_json = None
@@ -760,7 +880,11 @@ def pedido_adicionar(request):
 				quantidade=quantidade,
 				preco_unitario=preco_unitario,
 				tamanho=tamanho,
-				sabores=sabores_json
+				sabores=sabores_json,
+				borda_chocolate=borda_chocolate,
+				catupiry_cima=catupiry_cima,
+				catupiry_borda=catupiry_borda
+				,borda_tipo=borda_tipo
 			)
 			total += preco_unitario * quantidade
 
@@ -784,31 +908,69 @@ def pedido_adicionar(request):
 			)
 			total += bebida.preco * quantidade
 		
-		pedido.total = total
+		pedido.subtotal = total
+		pedido.total = total + taxa_entrega
 		pedido.save()
 		return redirect('painel_pedidos')
 	
 	pizzas = Pizza.objects.filter(disponivel=True)
 	bebidas = Bebida.objects.filter(disponivel=True)
+	ordem_locais = [
+		'Lucrécia',
+		'Lucrécia (Sitio)',
+		'Três Altos',
+		'Fogueteiro',
+		'Baixio de Onça',
+		'Frutuoso Gomes',
+		'Almino Afonso',
+	]
+	taxas_dict = {taxa.nome: taxa for taxa in TaxaEntrega.objects.filter(ativo=True)}
+	taxas_entrega = [taxas_dict[nome] for nome in ordem_locais if nome in taxas_dict]
 	return render(request, 'pizzaria/pedido_form.html', {
 		'pizzas': pizzas,
 		'bebidas': bebidas,
+		'taxas_entrega': taxas_entrega,
+		'usuario_e_garcom': garcom_user(request.user),
 		'active_page': 'pedidos'
 	})
 
 @login_required(login_url='/login/')
 @require_POST
+@csrf_exempt
 def pedido_alterar_status(request, pedido_id):
 	pedido = get_object_or_404(Pedido, id=pedido_id)
 	novo_status = request.POST.get('status')
+	motoqueiro_id = request.POST.get('motoqueiro_id')
+
+	# Só altera o entregador se o campo foi enviado no formulário
+	if motoqueiro_id is not None:
+		if motoqueiro_id.isdigit():
+			motoqueiro_user = get_object_or_404(User, id=int(motoqueiro_id), groups__name='Motoqueiros')
+			pedido.motoqueiro = motoqueiro_user
+		elif motoqueiro_id == "": 
+			pedido.motoqueiro = None
+
+	# Validação e gravação do status do pedido
 	status_validos = {valor for valor, _ in Pedido.STATUS_CHOICES}
 	if novo_status in status_validos:
 		pedido.status = novo_status
 		if novo_status == 'Pago':
 			pedido.fechado_em = timezone.now()
+		
+		# Salva todas as alterações juntas (Status e Entregador) de forma persistente
 		pedido.save()
+		messages.success(request, 'Pedido atualizado com sucesso!')
 	else:
 		messages.error(request, 'Status inválido para o pedido.')
+		
+	return redirect('painel_pedidos')
+
+@dono_required
+@require_POST
+def pedido_excluir(request, pedido_id):
+	pedido = get_object_or_404(Pedido, id=pedido_id)
+	pedido.delete()
+	messages.success(request, 'Pedido removido com sucesso!')
 	return redirect('painel_pedidos')
 
 @login_required(login_url='/login/')
@@ -858,16 +1020,114 @@ def login_view(request):
 			return render(request, 'pizzaria/login.html', {'error': 'Usuário ou senha inválidos.'})
 	return render(request, 'pizzaria/login.html')
 
+def lista_motoqueiros_view(request):
+    motoqueiros = Motoqueiro.objects.all().select_related('usuario')
+    context = {
+        'motoqueiros': motoqueiros,
+        'active_page': 'motoqueiros',
+    }
+    return render(request, 'pizzaria/motoqueiro_formulario.html', context) 
+
+
+@login_required(login_url='/login/')
+@dono_required
+def cadastrar_motoqueiro_view(request):
+    if request.method == 'POST':
+        nome = request.POST.get('nome', '').strip()
+        senha = request.POST.get('senha', '').strip()
+        if not nome or not senha:
+            messages.error(request, 'Preencha todos os campos obrigatórios.')
+            return redirect('cadastrar_motoqueiro')
+        username = re.sub(r'\s+', '_', nome.lower())
+        username = re.sub(r'[^\w]', '', username)
+        if not username:
+            messages.error(request, 'Nome inválido para gerar um usuário.')
+            return redirect('cadastrar_motoqueiro')
+        if User.objects.filter(username=username).exists():
+            username = f"{username}_{User.objects.count() + 1}"
+        try:
+            user = User.objects.create_user(username=username, password=senha)
+            nome_partes = nome.split(' ', 1)
+            user.first_name = nome_partes[0]
+            if len(nome_partes) > 1:
+                user.last_name = nome_partes[1]
+            user.save()
+            grupo_motoqueiros, _ = Group.objects.get_or_create(name='Motoqueiros')
+            user.groups.add(grupo_motoqueiros)            
+            messages.success(request, f'Motoqueiro {nome} cadastrado com sucesso!')
+        except Exception as e:
+            messages.error(request, f'Erro ao cadastrar motoqueiro: {str(e)}')
+        return redirect('cadastrar_motoqueiro')
+    motoqueiros_ativos = User.objects.filter(groups__name='Motoqueiros', is_active=True).order_by('first_name')
+    motoqueiros_inativos = User.objects.filter(groups__name='Motoqueiros', is_active=False).order_by('first_name')
+    
+    context = {
+        'motoqueiros': motoqueiros_ativos,
+        'motoqueiros_inativos': motoqueiros_inativos
+    }
+    return render(request, 'pizzaria/motoqueiro_formulario.html', context)
+
+@login_required(login_url='/login/')
 @require_POST
-def logout_view(request):
-	logout(request)
-	return redirect('login')
+@csrf_exempt
+def vincular_motoqueiro_ao_pedido(request, pedido_id):
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    motoqueiro_id = request.POST.get('motoqueiro_id')
+
+    if not motoqueiro_id:
+        messages.error(request, 'Selecione um entregador válido.')
+        return redirect('painel_pedidos' if garcom_user(request.user) else 'painel')
+        
+    motoqueiro = get_object_or_404(User, id=motoqueiro_id, groups__name='Motoqueiros')
+    
+    pedido.motoqueiro_responsavel = motoqueiro 
+
+    pedido.status = "Pronto" 
+    
+    pedido.save()
+
+    messages.success(request, f'Pedido #{pedido.id} despachado com sucesso por {motoqueiro.first_name}!')
+    if garcom_user(request.user):
+        return redirect('painel_pedidos')
+    return redirect('painel')
+
+@login_required(login_url='/login/')
+@require_POST
+@csrf_exempt
+def desativar_motoqueiro_view(request, user_id):
+
+    motoqueiro = get_object_or_404(User, id=user_id, groups__name='Motoqueiros')
+    motoqueiro.is_active = False
+    motoqueiro.save()
+    messages.success(request, f'Motoqueiro desativado com sucesso!')
+    return redirect('cadastrar_motoqueiro')
+
+
+@login_required(login_url='/login/')
+@dono_required
+@require_POST
+def excluir_motoqueiro_permanente_view(request, user_id):
+    motoqueiro = get_object_or_404(User, id=user_id, groups__name='Motoqueiros')
+    nome_salvo = motoqueiro.get_full_name() or motoqueiro.username
+    motoqueiro.delete() 
+    messages.success(request, f'Motoqueiro {nome_salvo} foi excluído permanentemente.')
+    return redirect('cadastrar_motoqueiro')
+
+@login_required(login_url='/login/')
+@dono_required
+@require_POST
+@csrf_exempt
+def reativar_motoqueiro_view(request, user_id):
+
+    motoqueiro = get_object_or_404(User, id=user_id, groups__name='Motoqueiros')
+    motoqueiro.is_active = True
+    motoqueiro.save()
+    messages.success(request, f'Motoqueiro reativado com sucesso!')
+    return redirect('cadastrar_motoqueiro')
+
 
 def debug_recriar_pizzas(request):
-	"""View de debug para recriar pizzas"""
 	from django.http import HttpResponse
-	
-	# Apagar todas
 	count = Pizza.objects.count()
 	Pizza.objects.all().delete()
 	
@@ -918,3 +1178,25 @@ def debug_recriar_pizzas(request):
 		</ul>
 		<a href="/escolher-sabores/">Ir para o site</a>
 	""")
+
+def login_view(request):
+    if request.method == 'POST':
+        usuario_raw = request.POST.get('username')
+        senha_raw = request.POST.get('password')
+        user = authenticate(request, username=usuario_raw, password=senha_raw)
+        if user is not None:
+            login(request, user)
+            messages.success(request, f"Bem-vindo de volta, {user.username}!")
+            # Redireciona o garçom direto para os pedidos ativos, outros vão para o painel geral
+            if garcom_user(user):
+                return redirect('painel_pedidos')
+            return redirect('painel')
+        else:
+            messages.error(request, "Usuário ou senha inválidos.")
+    return render(request, 'pizzaria/login.html')
+
+
+def logout_view(request):
+    logout(request)
+    messages.success(request, "Você saiu do painel administrativo.")
+    return redirect('login')

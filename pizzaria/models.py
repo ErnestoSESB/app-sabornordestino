@@ -1,5 +1,25 @@
 from django.db import models
 from .utils import SanitizedModelMixin
+from django.contrib.auth.models import User
+
+class Usuario:
+    def __init__(self, id_usuario, nome, email, tipo_usuario):
+        self.id_usuario = id_usuario
+        self.nome = nome
+        self.email = email
+        self.tipo_usuario = tipo_usuario  # Ex: "admin", "cliente", "motoqueiro"
+        self.ativo = True
+        # No futuro, você adicionará campos como: senha_hash, ultimo_login, etc.
+
+class Motoqueiro:
+    def __init__(self, id_motoqueiro, usuario: Usuario, telefone, placa_moto=None):
+        self.id_motoqueiro = id_motoqueiro
+        # Vincula diretamente ao usuário correspondente
+        self.usuario = usuario  
+        self.telefone = telefone
+        self.placa_moto = placa_moto
+        self.disponivel = True
+
 
 class TaxaEntrega(SanitizedModelMixin, models.Model):
 	nome = models.CharField(max_length=100, unique=True, help_text='Nome da localidade')
@@ -66,6 +86,7 @@ class Pedido(SanitizedModelMixin, models.Model):
 		("Entregue", "Entregue"),
 		("Pago", "Pago"),
 	]
+	usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, help_text="Garçom que registrou")
 	cliente = models.CharField(max_length=100)
 	cliente_token = models.CharField(max_length=64, blank=True, default='', db_index=True)
 	telefone = models.CharField(max_length=20, blank=True, default="")
@@ -82,6 +103,7 @@ class Pedido(SanitizedModelMixin, models.Model):
 	atualizado_em = models.DateTimeField(auto_now=True)
 	reaberto_em = models.DateTimeField(null=True, blank=True)
 	fechado_em = models.DateTimeField(null=True, blank=True)
+	motoqueiro = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='entregas_motoqueiro', help_text="Entregador responsável")
 
 	def __str__(self):
 		return f"Pedido #{self.id} - {self.cliente}"
@@ -100,6 +122,13 @@ class ItemPedido(SanitizedModelMixin, models.Model):
 	sabores = models.TextField(blank=True, null=True, help_text='JSON com sabores múltiplos')
 	tamanho = models.CharField(max_length=1, choices=[('P', 'Pequena'), ('M', 'Média'), ('G', 'Grande')], default='G')
 	borda_chocolate = models.BooleanField(default=False)
+	borda_tipo = models.CharField(max_length=20, choices=[
+		('catupiry', 'Catupiry'),
+		('cheddar', 'Cheddar'),
+		('sem_borda', 'Sem borda'),
+		('catupiry_original', 'Catupiry Original'),
+		('chocolate', 'Chocolate'),
+	], default='catupiry')
 	catupiry_cima = models.CharField(max_length=10, choices=[('nao', 'Não'), ('inteira', 'Inteira'), ('metade', 'Metade')], default='nao')
 	catupiry_borda = models.BooleanField(default=False)
 	

@@ -127,12 +127,15 @@
                     </div>
 
                     <div class="addons-grid">
-                        <label class="addon-option">
-                            <input type="checkbox" name="borda_chocolate" id="borda_chocolate" onchange="controlarBordas(event); calcularPreco()">
-                            <span class="addon-option__box">
-                                <strong>Borda de Chocolate</strong>
-                                <small>P: +R$ 6 | M: +R$ 8 | G: +R$ 10</small>
-                            </span>
+                        <label class="addon-option addon-option--select">
+                            <span class="addon-option__label">Tipo de borda</span>
+                            <select name="borda_tipo" id="borda_tipo" onchange="calcularPreco()">
+                                <option value="catupiry">Catupiry (+R$ 0,00)</option>
+                                <option value="cheddar">Cheddar (+R$ 0,00)</option>
+                                <option value="sem_borda">Sem borda (+R$ 0,00)</option>
+                                <option value="catupiry_original">Catupiry Original (P: +R$ 10 | M: +R$ 12 | G: +R$ 14)</option>
+                                <option value="chocolate">Chocolate (P: +R$ 6 | M: +R$ 8 | G: +R$ 10)</option>
+                            </select>
                         </label>
 
                         <label class="addon-option addon-option--select">
@@ -144,13 +147,6 @@
                             </select>
                         </label>
 
-                        <label class="addon-option">
-                            <input type="checkbox" name="catupiry_borda" id="catupiry_borda" onchange="controlarBordas(event); calcularPreco()">
-                            <span class="addon-option__box">
-                                <strong>Catupiry Original na Borda</strong>
-                                <small>P: +R$ 10 | M: +R$ 12 | G: +R$ 14</small>
-                            </span>
-                        </label>
                     </div>
                 </section>
 
@@ -218,7 +214,7 @@
                     <i class="fa-solid fa-location-dot"></i>
                     <div>
                         <h4>Onde estamos</h4>
-                        <p>Av. Ivan Cavalcante - 21, Lucrecia RN</p>
+                        <p>Av. Lauro Maia - 21, Lucrecia RN</p>
                     </div>
                 </div>
                 <div class="info-item">
@@ -232,7 +228,7 @@
                     <i class="fa-regular fa-clock"></i>
                     <div>
                         <h4>Horário</h4>
-                        <p>Ter a Dom · à partir das 18h</p>
+                        <p>18h às 23h</p>
                     </div>
                 </div>
             </div>
@@ -248,7 +244,7 @@
                     <p>Pizzas com massa de fermentação natural, assadas no forno a lenha. O sabor que acende a sua fome.</p>
                     <div class="social-links">
                         <a href="https://www.instagram.com/pizzariasabornordestinoo?utm_source=ig_web_button_share_sheet&amp;igsi=ZDNlZDc0MzIxNw=="><i class="fa-brands fa-instagram"></i></a>
-                        <a href="https://api.whatsapp.com/send/?phone=5584990346414&amp;text&amp;type=phone_number&amp;app_absent=0"><i class="fa-brands fa-whatsapp"></i></a>
+                        <a href="https://api.whatsapp.com/send/?phone=5584920031436&amp;text&amp;type=phone_number&amp;app_absent=0"><i class="fa-brands fa-whatsapp"></i></a>
                     </div>
                 </div>
 
@@ -265,9 +261,9 @@
                 <div class="footer-contact">
                     <h4>Contato</h4>
                     <ul>
-                        <li><i class="fa-solid fa-location-dot"></i> Av. Ivan Cavalcante - 21, Lucrecia RN</li>
+                        <li><i class="fa-solid fa-location-dot"></i> Av. Lauro Maia - 21, Lucrecia RN</li>
                         <li><i class="fa-solid fa-phone"></i> (84) 920031436</li>
-                        <li><i class="fa-regular fa-clock"></i> Ter a Dom · à partir das 18h</li>
+                        <li><i class="fa-regular fa-clock"></i> 18h às 23h</li>
                     </ul>
                 </div>
 
@@ -454,9 +450,24 @@
                 }
             }
 
-            if (document.getElementById('borda_chocolate').checked) {
-                const bordas = {'P': 6.00, 'M': 8.00, 'G': 10.00};
-                preco += bordas[tamanho];
+            const bordaTipo = document.getElementById('borda_tipo').value;
+            const bordaSelect = document.getElementById('borda_tipo');
+            const bordasChocolate = {'P': 6.00, 'M': 8.00, 'G': 10.00};
+            const bordasOriginal = {'P': 10.00, 'M': 12.00, 'G': 14.00};
+            const bordaValores = {
+                catupiry: 'Catupiry (+R$ 0,00)',
+                cheddar: 'Cheddar (+R$ 0,00)',
+                sem_borda: 'Sem borda (+R$ 0,00)',
+                catupiry_original: `Catupiry Original (+R$ ${bordasOriginal[tamanho].toFixed(2).replace('.', ',')})`,
+                chocolate: `Chocolate (+R$ ${bordasChocolate[tamanho].toFixed(2).replace('.', ',')})`,
+            };
+            Array.from(bordaSelect.options).forEach(option => {
+                option.textContent = bordaValores[option.value] || option.textContent;
+            });
+            if (bordaTipo === 'chocolate') {
+                preco += bordasChocolate[tamanho];
+            } else if (bordaTipo === 'catupiry_original') {
+                preco += bordasOriginal[tamanho];
             }
 
             const catupiryCima = document.getElementById('catupiry_cima').value;
@@ -468,10 +479,6 @@
                 preco += catupiry[tamanho];
             }
 
-            if (document.getElementById('catupiry_borda').checked) {
-                const catupiry = {'P': 10.00, 'M': 12.00, 'G': 14.00};
-                preco += catupiry[tamanho];
-            }
 
             let bebidasNomes = [];
             let bebidaPrecoTotal = 0;
@@ -510,13 +517,11 @@
                 linhasResumo.push(`• Pizza ${tamanhoNome[tamanho]} - ${sabores.join(' / ')}`);
             }
 
-            if (document.getElementById('borda_chocolate').checked) {
-                linhasResumo.push('• Borda de Chocolate');
-            }
-
-            if (document.getElementById('catupiry_borda').checked) {
-                linhasResumo.push('• Catupiry na Borda');
-            }
+            const nomesBorda = {
+                catupiry: 'Borda de Catupiry', cheddar: 'Borda de Cheddar', sem_borda: 'Sem borda',
+                catupiry_original: 'Borda de Catupiry Original', chocolate: 'Borda de Chocolate'
+            };
+            linhasResumo.push(`• ${nomesBorda[bordaTipo]}`);
 
             if (catupiryCima !== 'nao') {
                 const labelCatupiry = catupiryCima === 'metade' ? 'Catupiry por Cima (Metade)' : 'Catupiry por Cima (Inteira)';
@@ -535,19 +540,6 @@
             if (precoFinal) precoFinal.textContent = `R$ ${total.toFixed(2)}`;
         }
 
-        function controlarBordas(event) {
-            const bordaChocolate = document.getElementById('borda_chocolate');
-            const catupiryBorda = document.getElementById('catupiry_borda');
-            const origem = event ? event.target.id : null;
-
-            if (bordaChocolate.checked && catupiryBorda.checked) {
-                if (origem === 'borda_chocolate') {
-                    catupiryBorda.checked = false;
-                } else {
-                    bordaChocolate.checked = false;
-                }
-            }
-        }
     </script>
 </body>
 </html>

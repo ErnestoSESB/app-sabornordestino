@@ -17,7 +17,6 @@
 <body class="admin-body">
     <div class="admin-layout">
         {% include 'pizzaria/partials/painel_sidebar.html' with active_page='historico' %}
-
         <main class="admin-content">
             <header class="admin-header">
                 <div>
@@ -44,12 +43,22 @@
                 <article class="order-card-detailed">
                     <div class="order-card-header">
                         <span class="order-id">Pedido #{{ pedido.id|stringformat:"03d" }}</span>
-                        <span class="order-time">Finalizado em {{ pedido.criado_em|date:"d/m/Y H:i" }}</span>
-                        <span class="badge {% if pedido.status == 'Entregue' %}badge-success{% else %}badge-warning{% endif %}">{{ pedido.status }}</span>
+                        <span class="order-time">
+                            {% if pedido.reaberto_em %}Reabertura em {{ pedido.reaberto_em|date:"d/m/Y H:i" }}{% if pedido.status == 'Pago' and pedido.fechado_em %} · Fechado em {{ pedido.fechado_em|date:"d/m/Y H:i" }}{% endif %}
+                            {% else %}Finalizado em {{ pedido.criado_em|date:"d/m/Y H:i" }}{% endif %}
+                        </span>
+                        {% if pedido.status == 'Em preparo' %}
+                            <span class="badge badge-preparo">Em preparo</span>
+                        {% elif pedido.status == 'Pronto' or pedido.status == 'Entregue' %}
+                            <span class="badge badge-entrega">Saiu para entrega</span>
+                        {% elif pedido.status == 'Pago' %}
+                            <span class="badge badge-pago">Pago</span>
+                        {% endif %}
                     </div>
                     <div class="order-card-body">
                         <div class="order-info-grid">
                             <div class="info-box"><span>Cliente</span><strong>{{ pedido.cliente }}</strong></div>
+                            {% if pedido.cadastrado_por_garcom %}<div class="info-box"><span>Cadastrado por</span><strong>{{ pedido.usuario.get_full_name|default:pedido.usuario.username }}</strong></div>{% endif %}
                             <div class="info-box"><span>Telefone</span><strong>{{ pedido.telefone|default:'Não informado' }}</strong></div>
                             <div class="info-box"><span>Entrega</span><strong>{% if pedido.local_entrega %}{{ pedido.local_entrega.nome }}{% else %}Retirada no local{% endif %}</strong></div>
                             <div class="info-box"><span>Endereço</span><strong>{% if pedido.endereco %}{{ pedido.endereco }}{% else %}Não informado{% endif %}</strong></div>
@@ -72,7 +81,34 @@
                         </div>
                         {% endfor %}
                     </div>
-                    <div class="action-buttons-group"><a href="{% url 'pedido_imprimir' pedido.id %}" class="btn btn-danger btn-sm" target="_blank"><i class="fa-solid fa-print"></i> Imprimir</a></div>
+                    <div class="action-buttons-group">
+                        <!-- 🌟 SEÇÃO DE REABERTURA: Protegida para não aparecer para garçons -->
+                        {% if not usuario_e_garcom %}
+                        <button type="button" class="btn btn-secondary btn-sm reopen-order-btn" data-target="reabrir-{{ pedido.id }}"><i class="fa-solid fa-rotate-left"></i> Reabrir pedido</button>
+                        {% endif %}
+                        <a href="{% url 'pedido_imprimir' pedido.id %}" class="btn btn-danger btn-sm" target="_blank"><i class="fa-solid fa-print"></i> Imprimir</a>
+                        {% if not usuario_e_garcom %}
+                        <form method="post" action="{% url 'pedido_excluir' pedido.id %}" onsubmit="return confirm('Tem certeza que deseja remover este pedido?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i> Remover</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    
+                    {% if not usuario_e_garcom %}
+                    <div id="reabrir-{{ pedido.id }}" class="reopen-panel" hidden>
+                        <form method="post" action="{% url 'pedido_reabrir' pedido.id %}" class="status-update-action">
+                            {% csrf_token %}
+                            <label for="reabrir-status-{{ pedido.id }}">Escolha o novo status</label>
+                            <select id="reabrir-status-{{ pedido.id }}" name="status" class="form-control" required>
+                                {% for valor, label in pedido.STATUS_CHOICES %}
+                                    {% if valor != 'Pago' %}<option value="{{ valor }}">{{ label }}</option>{% endif %}
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-check"></i> Confirmar reabertura de pedido</button>
+                        </form>
+                    </div>
+                    {% endif %}
                 </article>
                 {% empty %}
                 <div class="order-card-detailed"><h3>Nenhum pedido registrado</h3><p class="order-time">Os pedidos realizados aparecerão aqui.</p></div>
@@ -80,5 +116,15 @@
             </div>
         </main>
     </div>
+    <script>
+        document.querySelectorAll('.reopen-order-btn').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const panel = document.getElementById(button.dataset.target);
+                if (panel) {
+                    panel.hidden = !panel.hidden;
+                }
+            });
+        });
+    </script>
 </body>
 </html>

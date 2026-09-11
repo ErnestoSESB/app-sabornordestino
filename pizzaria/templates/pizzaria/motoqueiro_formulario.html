@@ -1,0 +1,136 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Motoqueiros - Sabor &amp; Nordestino</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Playfair+Display:ital,wght@0,600;0,700;1,600&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'pizzaria/gerenciar.css' %}?v=12">
+    <link rel="stylesheet" href="{% static 'pizzaria/painel_sidebar.css' %}?v=11">
+</head>
+<body class="admin-body">
+    <div class="admin-layout">
+        {% include 'pizzaria/partials/painel_sidebar.html' with active_page='motoqueiros' %}
+        
+        <main class="admin-content">
+            <header class="admin-header">
+                <div>
+                    <h1>Gerenciar Motoqueiros</h1>
+                    <p>Cadastre os acessos para a equipe de entrega.</p>
+                </div>
+            </header>
+
+            {% if messages %}
+                {% for message in messages %}<p class="form-message">{{ message }}</p>{% endfor %}
+            {% endif %}
+
+            <div class="form-container-card">
+                <h2>Novo motoqueiro</h2>
+                <form method="post" action="{% url 'cadastrar_motoqueiro' %}" class="admin-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="nome">Nome Completo</label>
+                        <input id="nome" name="nome" class="form-control" type="text" placeholder="Ex: Carlos Silva" autocomplete="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">E-mail (Será o usuário de controle)</label>
+                        <input id="email" name="email" class="form-control" type="email" placeholder="carlos@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="senha">Senha de Acesso</label>
+                        <input id="senha" name="senha" class="form-control" type="password" minlength="6" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="telefone">Telefone / WhatsApp</label>
+                        <input id="telefone" name="telefone" class="form-control" type="text" placeholder="(84) 99999-9999" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="placa_moto">Placa da Moto (Opcional)</label>
+                        <input id="placa_moto" name="placa_moto" class="form-control" type="text" placeholder="ABC-1234">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-motorcycle"></i> Salvar Motoqueiro</button>
+                </form>
+            </div>
+
+            <div class="items-list-grid" style="margin-top: 24px;">
+                {% for motoqueiro in motoqueiros %}
+                    <div class="management-card">
+                        <div class="item-info">
+                            <h3>{{ motoqueiro.get_full_name|default:motoqueiro.username }}</h3>
+                            <p class="item-desc">Usuário: {{ motoqueiro.username }}</p>
+                        </div>
+                        
+                        <div class="card-actions" style="display: flex; gap: 8px;">
+                            <form method="post" action="{% url 'desativar_motoqueiro' motoqueiro.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-warning btn-sm">
+                                    <i class="fa-solid fa-user-slash"></i> Desativar
+                                </button>
+                            </form>
+
+                            <form method="post" action="{% url 'excluir_motoqueiro_permanente' motoqueiro.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja apagar permanentemente?')">
+                                    <i class="fa-solid fa-trash-can"></i> Excluir
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="management-card"><p class="item-desc">Nenhum motoqueiro ativo cadastrado.</p></div>
+                {% endfor %}
+            </div>
+            {% if motoqueiros_inativos %}
+            <h2 style="margin-top: 40px; color: var(--text-muted, #666); font-size: 1.2rem;">Motoqueiros Inativos</h2>
+            <div class="items-list-grid" style="margin-top: 16px; opacity: 0.8;">
+                {% for motoqueiro in motoqueiros_inativos %}
+                    <div class="management-card" style="border-left: 4px solid #ccc; background-off: #fafafa;">
+                        <div class="item-info">
+                            <h3>{{ motoqueiro.get_full_name|default:motoqueiro.username }}</h3>
+                            <p class="item-desc">Usuário: {{ motoqueiro.username }} (Inativo)</p>
+                        </div>
+                        
+                        <div class="card-actions" style="display: flex; gap: 8px;">
+                            <form method="post" action="{% url 'reativar_motoqueiro' motoqueiro.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-sm" style="background-color: #2e7d32; color: white;">
+                                    <i class="fa-solid fa-user-check"></i> Reativar
+                                </button>
+                            </form>
+                            <form method="post" action="{% url 'excluir_motoqueiro_permanente' motoqueiro.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja apagar permanentemente?')">
+                                    <i class="fa-solid fa-trash-can"></i> Excluir
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </main>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const container = document.querySelector('.admin-content');
+            
+            if (container) {
+                const scrollPosition = localStorage.getItem("motoqueiros_scroll_pos");
+                if (scrollPosition) {
+                    container.scrollTop = parseInt(scrollPosition);
+                    localStorage.removeItem("motoqueiros_scroll_pos");
+                }
+                document.querySelectorAll('form').forEach(form => {
+                    form.addEventListener('submit', function() {
+                        localStorage.setItem("motoqueiros_scroll_pos", container.scrollTop);
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

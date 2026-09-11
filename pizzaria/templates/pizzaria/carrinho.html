@@ -98,6 +98,7 @@
             <div><span>Endereço: </span><strong>{% if pedido_em_andamento.endereco %}{{ pedido_em_andamento.endereco }}{% else %}Retirada no local{% endif %}</strong></div>
             <div><span>Pagamento: </span><strong>{{ pedido_em_andamento.forma_pagamento }}</strong></div>
             {% if pedido_em_andamento.observacao %}<div><span>Observações: </span><strong>{{ pedido_em_andamento.observacao }}</strong></div>{% endif %}
+            <div><span>Horário do pedido: </span><strong>{{ pedido_em_andamento.criado_em|date:"H:i" }}</strong></div>
           </div>
 
           <div class="tracking-total">
@@ -232,69 +233,96 @@
           </form>
         </div>
         {% endfor %} {% endif %}
-
         {% if itens %}
-        <div class="checkout-card order-summary">
-          <h3 class="card-title">Resumo do Pedido</h3>
-
-          {% if itens %}
-          <div class="summary-list">
-            {% for item in itens %} {% if item.tipo == 'bebida' %}
-            <div class="summary-line summary-item-line">
-              <span
-                >{{ item.bebida.nome }}{% if item.quantidade > 1 %} × {{
-                item.quantidade }}{% endif %}</span
-              >
-              <span>R$ {{ item.total }}</span>
-            </div>
-            {% else %}
-            <div class="summary-line summary-item-line">
-              <span
-                >{{ item.sabores_data.descricao|default:item.pizza.nome }}</span
-              >
-              <span>R$ {{ item.total }}</span>
-            </div>
-
-            {% if item.borda_chocolate %}
-            <div class="summary-line summary-addon-line">
-              <span>Borda de Chocolate</span>
-              <span>
-                R$ {% if item.tamanho == 'P' %}6,00{% elif item.tamanho == 'M'
-                %}8,00{% else %}10,00{% endif %}
-              </span>
-            </div>
-            {% endif %} {% if item.catupiry_cima == 'metade' %}
-            <div class="summary-line summary-addon-line">
-              <span>Catupiry por Cima (Metade)</span>
-              <span>
-                R$ {% if item.tamanho == 'P' %}5,00{% elif item.tamanho == 'M'
-                %}6,00{% else %}7,00{% endif %}
-              </span>
-            </div>
-            {% endif %} {% if item.catupiry_cima == 'inteira' %}
-            <div class="summary-line summary-addon-line">
-              <span>Catupiry por Cima (Inteira)</span>
-              <span>
-                R$ {% if item.tamanho == 'P' %}10,00{% elif item.tamanho == 'M'
-                %}12,00{% else %}14,00{% endif %}
-              </span>
-            </div>
-            {% endif %} {% if item.catupiry_borda %}
-            <div class="summary-line summary-addon-line">
-              <span>Catupiry na Borda</span>
-              <span>
-                R$ {% if item.tamanho == 'P' %}10,00{% elif item.tamanho == 'M'
-                %}12,00{% else %}14,00{% endif %}
-              </span>
-            </div>
-            {% endif %} {% endif %} {% endfor %}
+          <div class="checkout-card order-summary">
+              <h3 class="card-title">Resumo do Pedido</h3>
+              <div class="summary-list">
+                  {% for item in itens %}
+                      {% if item.tipo == 'bebida' %}
+                          <div class="summary-line summary-item-line">
+                              <span>
+                                  {{ item.bebida.nome }}
+                                  {% if item.quantidade > 1 %}
+                                      × {{ item.quantidade }}
+                                  {% endif %}
+                              </span>
+                              <span>R$ {{ item.total }}</span>
+                          </div>
+                      {% else %}
+                          <div class="summary-line summary-item-line">
+                              <span>
+                                  {{ item.sabores_data.descricao|default:item.pizza.nome }}
+                              </span>
+                              <span>R$ {{ item.total }}</span>
+                          </div>
+                          {% if item.borda_chocolate %}
+                              <div class="summary-line summary-addon-line">
+                                  <span>Borda de Chocolate</span>
+                                  <span>
+                                      R$
+                                      {% if item.tamanho == 'P' %}
+                                          6,00
+                                      {% elif item.tamanho == 'M' %}
+                                          8,00
+                                      {% else %}
+                                          10,00
+                                      {% endif %}
+                                  </span>
+                              </div>
+                          {% endif %}
+                          {% if item.catupiry_cima == 'metade' %}
+                              <div class="summary-line summary-addon-line">
+                                  <span>Catupiry por Cima (Metade)</span>
+                                  <span>
+                                      R$
+                                      {% if item.tamanho == 'P' %}
+                                          5,00
+                                      {% elif item.tamanho == 'M' %}
+                                          6,00
+                                      {% else %}
+                                          7,00
+                                      {% endif %}
+                                  </span>
+                              </div>
+                          {% endif %}
+                          {% if item.catupiry_cima == 'inteira' %}
+                              <div class="summary-line summary-addon-line">
+                                  <span>Catupiry por Cima (Inteira)</span>
+                                  <span>
+                                      R$
+                                      {% if item.tamanho == 'P' %}
+                                          10,00
+                                      {% elif item.tamanho == 'M' %}
+                                          12,00
+                                      {% else %}
+                                          14,00
+                                      {% endif %}
+                                  </span>
+                              </div>
+                          {% endif %}
+                          {% if item.catupiry_borda %}
+                              <div class="summary-line summary-addon-line">
+                                  <span>Catupiry na Borda</span>
+                                  <span>
+                                      R$
+                                      {% if item.tamanho == 'P' %}
+                                          10,00
+                                      {% elif item.tamanho == 'M' %}
+                                          12,00
+                                      {% else %}
+                                          14,00
+                                      {% endif %}
+                                  </span>
+                              </div>
+                          {% endif %}
+                      {% endif %}
+                  {% endfor %}
+              </div>
           </div>
           {% else %}
           <div class="summary-empty">
-            Seu pedido ainda está vazio. Adicione uma pizza ou bebida para ver o
-            resumo.
+              Seu pedido ainda está vazio. Adicione uma pizza ou bebida para ver o resumo.
           </div>
-          {% endif %}
 
           <div class="summary-line">
             <span>Subtotal:</span>
@@ -378,7 +406,7 @@
               </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" id="endereco-container">
               <label for="endereco"
                 >Endereço de Entrega: <span class="required">*</span></label>
               <textarea
@@ -443,9 +471,10 @@
             </button>
 
             <button
-              type="submit"
+              type="button"
               class="btn btn-whatsapp btn-block mt-2"
               id="btn-finalizar"
+              onclick="enviarParaWhatsApp()"
             >
               <i class="fa-solid fa-check"></i> Enviar Pedido pelo WhatsApp
             </button>
@@ -462,21 +491,21 @@
             <i class="fa-solid fa-location-dot"></i>
             <div>
               <h4>Onde estamos</h4>
-              <p>Av. Ivan Cavalcante - 21, Lucrecia RN</p>
+              <p>Av. Lauro Maia - 21, Lucrecia RN</p>
             </div>
           </div>
           <div class="info-item">
             <i class="fa-solid fa-phone"></i>
             <div>
               <h4>Telefone</h4>
-              <p>(84) 99034-6414</p>
+              <p>(84) 920031436</p>
             </div>
           </div>
           <div class="info-item">
             <i class="fa-regular fa-clock"></i>
             <div>
               <h4>Horário</h4>
-              <p>Ter a Dom · à partir das 18h</p>
+              <p>18h às 23h</p>
             </div>
           </div>
         </div>
@@ -501,7 +530,7 @@
                 ><i class="fa-brands fa-instagram"></i
               ></a>
               <a
-                href="https://api.whatsapp.com/send/?phone=5584990346414&text&type=phone_number&app_absent=0"
+                href="https://api.whatsapp.com/send/?phone=5584920031436&text&type=phone_number&app_absent=0"
                 ><i class="fa-brands fa-whatsapp"></i
               ></a>
             </div>
@@ -521,12 +550,12 @@
             <h4>Contato</h4>
             <ul>
               <li>
-                <i class="fa-solid fa-location-dot"></i> Av. Ivan Cavalcante -
+                <i class="fa-solid fa-location-dot"></i> Av. Lauro Maia -
                 21, Lucrecia RN
               </li>
-              <li><i class="fa-solid fa-phone"></i> (84) 99034-6414</li>
+              <li><i class="fa-solid fa-phone"></i> (84) 920031436</li>
               <li>
-                <i class="fa-regular fa-clock"></i> Ter a Dom · à partir das 18h
+                <i class="fa-regular fa-clock"></i> 18h às 23h
               </li>
             </ul>
           </div>
@@ -551,14 +580,61 @@
     </footer>
 
     <script>
-      const subtotal =
-        parseFloat("{{ carrinho.get_total }}".replace(",", ".")) || 0;
+      function enviarParaWhatsApp() {
+        const form = document.getElementById('form-pedido');
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const nome = document.getElementById('nome').value.trim();
+        const localSelect = document.getElementById('local_entrega');
+        const localNome = localSelect.options[localSelect.selectedIndex].text;
+        const endereco = document.getElementById('endereco').value.trim();
+        const observacoes = document.getElementById('observacoes').value.trim();
+        const pagamento = document.getElementById('pagamento').value;
+        const troco = document.getElementById('troco').value.trim();
+        const totalTexto = document.getElementById('total-final').textContent;
+
+        let texto = `*🍕 NOVO PEDIDO - SABOR NORDESTINO*\n\n`;
+        texto += `*Cliente:* ${nome}\n`;
+        texto += `*Local de Entrega:* ${localNome}\n`;
+        texto += `*Endereço:* ${endereco}\n`;
+
+        if (observacoes) {
+            texto += `*Observações:* ${observacoes}\n`;
+        }
+
+        texto += `*Forma de Pagamento:* ${pagamento}\n`;
+
+        if (pagamento === "Dinheiro" && troco) {
+            texto += `*Troco para:* R$ ${troco}\n\n`;
+        }
+
+        texto += `*Total Geral:* ${totalTexto}\n\n`;
+        texto += `_Pedido enviado via site. Aguardando confirmação._`;
+
+        const numero = "5584920031436";
+        const url = `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`;
+        window.open(url, '_blank');
+    }
+      const subtotal = parseFloat("{{ carrinho.get_total }}".replace(",", ".")) || 0;
 
       function atualizarResumo() {
         const localSelect = document.getElementById("local_entrega");
         const selectedOption = localSelect.options[localSelect.selectedIndex];
         const taxa = parseFloat(selectedOption?.dataset.taxa || 0);
         const totalFinal = subtotal + taxa;
+        const enderecoContainer = document.getElementById("endereco-container");
+        const endereco = document.getElementById("endereco");
+        const retirada = localSelect.value === "local";
+
+        enderecoContainer.style.display = retirada ? "none" : "block";
+        endereco.required = !retirada;
+        if (retirada) {
+          endereco.value = "";
+        }
 
         const taxaEl = document.getElementById("taxa-entrega");
         const totalEl = document.getElementById("total-final");
@@ -567,36 +643,34 @@
         totalEl.textContent = `R$ ${totalFinal.toFixed(2).replace(".", ",")}`;
       }
 
-      document
-        .getElementById("local_entrega")
-        .addEventListener("change", atualizarResumo);
+      document.getElementById("local_entrega").addEventListener("change", atualizarResumo);
 
-      document
-        .querySelector('select[name="pagamento"]')
-        .addEventListener("change", function () {
-          const trocoContainer = document.getElementById("troco-container");
-          trocoContainer.style.display =
-            this.value === "Dinheiro" ? "block" : "none";
-        });
+      document.querySelector('select[name="pagamento"]').addEventListener("change", function () {
+        const trocoContainer = document.getElementById("troco-container");
+        trocoContainer.style.display = this.value === "Dinheiro" ? "block" : "none";
+      });
 
-      document
-        .getElementById("form-pedido")
-        .addEventListener("submit", function () {
-          const btn = document.getElementById("btn-finalizar");
-          btn.textContent = "Enviando...";
-          btn.disabled = true;
+      const form = document.getElementById('form-pedido');
+      const btnApp = document.getElementById('btn-finalizar-app');
+      const btnWhats = document.getElementById('btn-finalizar');
+      if (btnApp) {
+        btnApp.addEventListener('click', function() {
+          form.removeAttribute('target');
         });
+      }
 
-      document
-        .querySelectorAll('form[action*="/carrinho/remover/"]')
-        .forEach(function (form) {
-          form.addEventListener("submit", function () {
-            sessionStorage.setItem(
-              "carrinho-scroll-position",
-              String(window.scrollY || document.documentElement.scrollTop || 0),
-            );
-          });
+      form.addEventListener("submit", function (e) {
+          btnApp.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+      });
+
+      document.querySelectorAll('form[action*="/carrinho/remover/"]').forEach(function (form) {
+        form.addEventListener("submit", function () {
+          sessionStorage.setItem(
+            "carrinho-scroll-position",
+            String(window.scrollY || document.documentElement.scrollTop || 0),
+          );
         });
+      });
 
       const savedScroll = sessionStorage.getItem("carrinho-scroll-position");
       if (savedScroll !== null) {

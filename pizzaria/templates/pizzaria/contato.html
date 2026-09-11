@@ -37,19 +37,29 @@
   <section class="contact-section">
     <div class="container contact-grid">
       <div class="contact-info">
-        <div class="info-card"><div class="icon-box"><i class="fa-solid fa-location-dot"></i></div><div class="info-text"><h3>Endereço</h3><p>Av. Ivan Cavalcante - 21, Lucrecia - RN</p></div></div>
-        <div class="info-card"><div class="icon-box"><i class="fa-solid fa-phone"></i></div><div class="info-text"><h3>Telefone / WhatsApp</h3><p>(84) 99034-6414</p></div></div>
-        <div class="info-card"><div class="icon-box"><i class="fa-regular fa-clock"></i></div><div class="info-text"><h3>Horario de Funcionamento</h3><p>Terça a Domingo · 18h30 às 22h</p></div></div>
+        <div class="info-card"><div class="icon-box"><i class="fa-solid fa-location-dot"></i></div><div class="info-text"><h3>Endereço</h3><p>Av. Lauro Maia - 21, Lucrecia - RN</p></div></div>
+        <div class="info-card"><div class="icon-box"><i class="fa-solid fa-phone"></i></div><div class="info-text"><h3>Telefone / WhatsApp</h3><p>(84) 920031436</p></div></div>
+        <div class="info-card"><div class="icon-box"><i class="fa-regular fa-clock"></i></div><div class="info-text"><h3>Horario de Funcionamento</h3><p>18h às 23h</p></div></div>
         <div class="reservation-card"><h3>Reservas para eventos</h3><p>Aniversarios, confraternizacoes e jantares especiais. Fale conosco com antecedencia para garantir a melhor experiencia.</p></div>
       </div>
 
       <div class="contact-form-container">
         <div class="form-header"><h2>Envie uma mensagem</h2><p>Responderemos pelo WhatsApp.</p></div>
-        <form action="{% url 'contato' %}" method="post" class="contact-form">
+        <form action="{% url 'contato' %}" method="post" class="contact-form" target="_blank">
           {% csrf_token %}
-          <div class="form-group"><label for="nome">Nome</label><input type="text" id="nome" name="nome" placeholder="Seu nome" required maxlength="100"></div>
-          <div class="form-group"><label for="telefone">Telefone (com DDD)</label><input type="tel" id="telefone" name="telefone" placeholder="(84) 99999-9999" required maxlength="20" inputmode="tel" autocomplete="tel"></div>
-          <div class="form-group"><label for="mensagem">Mensagem</label><textarea id="mensagem" name="mensagem" rows="5" placeholder="Como podemos ajudar?" required maxlength="2000"></textarea></div>
+          <div class="form-group">
+            <label for="nome">Nome</label>
+            <input type="text" id="nome" name="nome" placeholder="Seu nome" required maxlength="100">
+          </div>
+          <div class="form-group">
+            <label for="telefone">Telefone (com DDD)</label>
+            <input type="tel" id="telefone" name="telefone" placeholder="(84) 99999-9999" required maxlength="20" inputmode="tel" autocomplete="tel">
+          </div>
+          <div class="form-group">
+            <label for="mensagem">Mensagem</label>
+            <textarea id="mensagem" name="mensagem" rows="5" placeholder="Como podemos ajudar?" required maxlength="2000"></textarea>
+          </div>
+
           <button type="submit" class="btn btn-primary btn-block"><i class="fa-regular fa-paper-plane"></i> Enviar Mensagem</button>
         </form>
       </div>
@@ -63,7 +73,7 @@
       <div class="container footer-grid">
         <div class="footer-brand"><div class="logo"><i class="fa-solid fa-fire text-primary"></i><span class="logo-text">Sabor <span class="text-primary">&amp;</span> Nordestino</span></div><p>Pizzas com massa de fermentacao natural, assadas no forno a lenha.</p><div class="social-links"><a href="https://www.instagram.com/pizzariasabornordestinoo" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a><a href="https://wa.me/5584920031436" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a></div></div>
         <div class="footer-links"><h4>Navegacao</h4><ul><li><a href="{% url 'index' %}">Inicio</a></li><li><a href="{% url 'cardapio' %}">Cardapio</a></li><li><a href="{% url 'contato' %}">Contato</a></li><li><a href="{% url 'painel' %}">Painel Admin</a></li></ul></div>
-        <div class="footer-contact"><h4>Contato</h4><ul><li><i class="fa-solid fa-location-dot"></i> Av. Ivan Cavalcante - 21, Lucrecia RN</li><li><i class="fa-solid fa-phone"></i> (84) 920031436</li><li><i class="fa-regular fa-clock"></i> Ter a Dom · 18h30 as 22h</li></ul></div>
+        <div class="footer-contact"><h4>Contato</h4><ul><li><i class="fa-solid fa-location-dot"></i> Av. Lauro Maia - 21, Lucrecia RN</li><li><i class="fa-solid fa-phone"></i> (84) 920031436</li><li><i class="fa-regular fa-clock"></i> 18h às 23h</li></ul></div>
         <div class="footer-about"><h4>Sobre nos</h4><p>Uma pizzaria artesanal feita com paixao, ingredientes frescos e massa de fermentacao natural.</p></div>
       </div>
     </div>
