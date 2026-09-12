@@ -406,7 +406,7 @@
               </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" id="endereco-container">
               <label for="endereco"
                 >Endereço de Entrega: <span class="required">*</span></label>
               <textarea
@@ -505,7 +505,7 @@
             <i class="fa-regular fa-clock"></i>
             <div>
               <h4>Horário</h4>
-              <p>Quarta a Dom · à partir das 18h</p>
+              <p>18h às 23h</p>
             </div>
           </div>
         </div>
@@ -530,7 +530,7 @@
                 ><i class="fa-brands fa-instagram"></i
               ></a>
               <a
-                href="https://api.whatsapp.com/send/?phone=558420031436&text&type=phone_number&app_absent=0"
+                href="https://api.whatsapp.com/send/?phone=5584920031436&text&type=phone_number&app_absent=0"
                 ><i class="fa-brands fa-whatsapp"></i
               ></a>
             </div>
@@ -555,7 +555,7 @@
               </li>
               <li><i class="fa-solid fa-phone"></i> (84) 920031436</li>
               <li>
-                <i class="fa-regular fa-clock"></i> Quarta a Dom · à partir das 18h
+                <i class="fa-regular fa-clock"></i> 18h às 23h
               </li>
             </ul>
           </div>
@@ -626,6 +626,15 @@
         const selectedOption = localSelect.options[localSelect.selectedIndex];
         const taxa = parseFloat(selectedOption?.dataset.taxa || 0);
         const totalFinal = subtotal + taxa;
+        const enderecoContainer = document.getElementById("endereco-container");
+        const endereco = document.getElementById("endereco");
+        const retirada = localSelect.value === "local";
+
+        enderecoContainer.style.display = retirada ? "none" : "block";
+        endereco.required = !retirada;
+        if (retirada) {
+          endereco.value = "";
+        }
 
         const taxaEl = document.getElementById("taxa-entrega");
         const totalEl = document.getElementById("total-final");

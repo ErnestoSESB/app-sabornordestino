@@ -351,6 +351,21 @@ body.admin-body {
     color: #ffb74d;
 }
 
+.badge-preparo {
+    background-color: rgba(33, 150, 243, 0.18);
+    color: #64b5f6;
+}
+
+.badge-entrega {
+    background-color: rgba(255, 152, 0, 0.18);
+    color: #ffb74d;
+}
+
+.badge-pago {
+    background-color: rgba(76, 175, 80, 0.18);
+    color: #81c784;
+}
+
 .order-info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -407,8 +422,14 @@ body.admin-body {
 
 .action-buttons-group {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 10px;
     margin-top: 8px;
+}
+
+.action-buttons-group form {
+    margin: 0;
 }
 
 .reopen-panel {
@@ -478,7 +499,8 @@ body.admin-body {
 }
 
 .item-builder-row > .item-main-fields,
-.item-builder-row > .extra-sabores {
+.item-builder-row > .sabor-fields,
+.item-builder-row > .pizza-addons {
     grid-column: 1 / -1;
 }
 
@@ -505,8 +527,57 @@ body.admin-body {
 
 .item-main-fields {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr minmax(110px, auto);
+    grid-template-columns: 1fr 1fr minmax(110px, auto);
     gap: 10px;
+}
+
+.sabor-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pizza-addons {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: #161616;
+}
+
+.pizza-addons-heading {
+    grid-column: 1 / -1;
+    color: var(--text-light);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.pizza-price {
+    grid-column: 1 / -1;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-light);
+    font-size: 0.9rem;
+    text-align: right;
+}
+
+.sabor-field,
+.sabor-extra-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.sabor-field label,
+.sabor-extra-wrapper label {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--text-muted);
 }
 
 .quantidade-acoes {
@@ -529,8 +600,8 @@ body.admin-body {
 }
 
 .extra-sabores {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 10px;
 }
 
@@ -721,6 +792,10 @@ body.admin-body {
 }
 
 @media (max-width: 768px) {
+    .form-container-card {
+        padding: 16px 12px;
+    }
+
     .management-card {
         flex-direction: column;
         align-items: flex-start;
@@ -731,12 +806,45 @@ body.admin-body {
     }
     .item-builder-row {
         grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 14px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: #191919;
     }
 
     .item-main-fields,
     .extra-sabores,
+    .pizza-addons,
     .bebida-builder-row {
         grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .sabor-fields,
+    .pizza-addons {
+        width: 100%;
+    }
+
+    .item-main-fields .form-control,
+    .extra-sabores .form-control,
+    .pizza-addons .form-control,
+    .bebida-builder-row .form-control {
+        min-height: 44px;
+    }
+
+    .pizza-price {
+        text-align: left;
+    }
+
+    .quantidade-acoes {
+        gap: 10px;
+    }
+
+    .quantidade-acoes .btn-remove-item {
+        width: 44px;
+        height: 44px;
+        flex-basis: 44px;
     }
 
     .bebida-builder-row .btn-remove-item {

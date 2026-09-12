@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import timedelta
 import json
 
 from django.contrib.auth import get_user_model
@@ -6,6 +7,7 @@ from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, Client
 from django.urls import reverse
+from django.utils import timezone
 
 from .calculadora_preco import calcular_preco_pizza
 from .models import Bebida, ItemPedido, Pedido, Pizza, TaxaEntrega
@@ -244,12 +246,96 @@ class PainelBebidasTests(TestCase):
 		bebida_ids_no_carrinho = {item.get('bebida_id') for item in carrinho.values() if item.get('bebida_id')}
 		self.assertEqual(bebida_ids_no_carrinho, {str(coca.id), str(guarana.id)})
 
+	def test_pedido_manual_salva_entrega_pagamento_e_taxa(self):
+		pizza = Pizza.objects.create(nome='Calabresa Manual', ingredientes='Calabresa', disponivel=True)
+		taxa = TaxaEntrega.objects.create(nome='Bairro Teste', taxa='5.00', ativo=True)
+		self.client.login(username='admin', password='123456')
+
+		response = self.client.post(
+			reverse('pedido_adicionar'),
+			data={
+				'cliente': 'Cliente Manual',
+				'telefone': '84999999999',
+				'local_entrega': str(taxa.id),
+				'endereco': 'Rua Teste, 10',
+				'forma_pagamento': 'Dinheiro',
+				'troco': '50,00',
+				'sabor_1[]': [str(pizza.id)],
+				'num_sabores[]': ['1'],
+				'tamanho[]': ['G'],
+				'quantidade[]': ['1'],
+			},
+		)
+
+		pedido = Pedido.objects.get(cliente='Cliente Manual')
+		self.assertRedirects(response, reverse('painel_pedidos'))
+		self.assertEqual(pedido.local_entrega, taxa)
+		self.assertEqual(pedido.forma_pagamento, 'Dinheiro')
+		self.assertEqual(pedido.troco, '50,00')
+		self.assertEqual(pedido.subtotal, Decimal('39.00'))
+		self.assertEqual(pedido.total, Decimal('44.00'))
+
+	def test_garcom_registra_pedido_sem_telefone_e_endereco(self):
+		pizza = Pizza.objects.create(nome='Calabresa Garcom', ingredientes='Calabresa', disponivel=True)
+		garcom = get_user_model().objects.create_user(username='garcom_sem_dados', password='senha123')
+		garcom.groups.create(name='Garçons')
+		self.client.login(username='garcom_sem_dados', password='senha123')
+
+		response = self.client.post(
+			reverse('pedido_adicionar'),
+			data={
+				'cliente': 'Cliente Garcom',
+				'sabor_1[]': [str(pizza.id)],
+				'num_sabores[]': ['1'],
+				'tamanho[]': ['G'],
+				'quantidade[]': ['1'],
+			},
+		)
+
+		pedido = Pedido.objects.get(cliente='Cliente Garcom')
+		self.assertRedirects(response, reverse('painel_pedidos'))
+		self.assertEqual(pedido.telefone, '')
+		self.assertEqual(pedido.endereco, '')
+
+	def test_pedido_manual_salva_adicionais_da_pizza(self):
+		pizza = Pizza.objects.create(nome='Calabresa Adicionais', ingredientes='Calabresa', disponivel=True)
+		self.client.login(username='admin', password='123456')
+
+		response = self.client.post(
+			reverse('pedido_adicionar'),
+			data={
+				'cliente': 'Cliente Adicionais',
+				'local_entrega': 'local',
+				'forma_pagamento': 'PIX',
+				'sabor_1[]': [str(pizza.id)],
+				'num_sabores[]': ['1'],
+				'tamanho[]': ['G'],
+				'quantidade[]': ['1'],
+				'borda_chocolate[]': ['sim'],
+				'catupiry_cima[]': ['metade'],
+				'catupiry_borda[]': ['sim'],
+			},
+		)
+
+		pedido = Pedido.objects.get(cliente='Cliente Adicionais')
+		item = pedido.itens.get()
+		self.assertRedirects(response, reverse('painel_pedidos'))
+		self.assertTrue(item.borda_chocolate)
+		self.assertEqual(item.catupiry_cima, 'metade')
+		self.assertFalse(item.catupiry_borda)
+		self.assertEqual(pedido.total, Decimal('56.00'))
+
 	def test_impressao_exibe_tres_sabores(self):
 		pizzas = [
 			Pizza.objects.create(nome=nome, ingredientes='Ingredientes', disponivel=True)
 			for nome in ('Sabor Um', 'Sabor Dois', 'Sabor Tres')
 		]
-		pedido = Pedido.objects.create(cliente='Cliente Sabores', total='39.00')
+		pedido = Pedido.objects.create(
+			cliente='Cliente Sabores',
+			total='39.00',
+			forma_pagamento='Dinheiro',
+			troco='50,00',
+		)
 		ItemPedido.objects.create(
 			pedido=pedido,
 			pizza=pizzas[0],
@@ -264,9 +350,11 @@ class PainelBebidasTests(TestCase):
 
 		response = self.client.get(reverse('pedido_imprimir', args=[pedido.id]))
 
-		self.assertContains(response, 'Sabor Um')
-		self.assertContains(response, 'Sabor Dois')
-		self.assertContains(response, 'Sabor Tres')
+		self.assertContains(response, '1/3 SABOR UM')
+		self.assertContains(response, '1/3 SABOR DOIS')
+		self.assertContains(response, '1/3 SABOR TRES')
+		self.assertContains(response, 'Troco para:')
+		self.assertContains(response, '50,00')
 
 	def test_painel_bebidas_exige_login(self):
 		response = self.client.get(reverse('painel_bebidas'))
@@ -305,6 +393,37 @@ class PainelBebidasTests(TestCase):
 		historico = self.client.get(reverse('historico_pedidos'))
 		self.assertNotContains(ativos, 'Cliente Pago')
 		self.assertContains(historico, 'Cliente Pago')
+
+	def test_pedido_reaberto_hoje_aparece_no_filtro_hoje(self):
+		pedido = Pedido.objects.create(cliente='Cliente Reaberto Hoje', total='39.00', status='Em preparo')
+		pedido.criado_em = timezone.now() - timedelta(days=2)
+		pedido.reaberto_em = timezone.now()
+		pedido.save(update_fields=['criado_em', 'reaberto_em'])
+		self.client.login(username='admin', password='123456')
+
+		response = self.client.get(reverse('painel_pedidos') + '?filtro=hoje')
+
+		self.assertContains(response, 'Cliente Reaberto Hoje')
+
+	def test_dono_pode_excluir_pedido(self):
+		pedido = Pedido.objects.create(cliente='Cliente Removido', total='39.00')
+		self.client.login(username='admin', password='123456')
+
+		response = self.client.post(reverse('pedido_excluir', args=[pedido.id]))
+
+		self.assertRedirects(response, reverse('painel_pedidos'))
+		self.assertFalse(Pedido.objects.filter(id=pedido.id).exists())
+
+	def test_garcom_nao_pode_excluir_pedido(self):
+		pedido = Pedido.objects.create(cliente='Cliente Protegido', total='39.00')
+		garcom = get_user_model().objects.create_user(username='garcom_exclusao', password='senha123')
+		garcom.groups.create(name='Garçons')
+		self.client.login(username='garcom_exclusao', password='senha123')
+
+		response = self.client.post(reverse('pedido_excluir', args=[pedido.id]))
+
+		self.assertRedirects(response, reverse('painel_pedidos'))
+		self.assertTrue(Pedido.objects.filter(id=pedido.id).exists())
 
 	def test_pedido_pago_pode_ser_reaberto_com_novo_status(self):
 		pedido = Pedido.objects.create(cliente='Cliente Reaberto', total='39.00', status='Pago')

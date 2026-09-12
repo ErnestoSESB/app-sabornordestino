@@ -122,6 +122,13 @@ class ItemPedido(SanitizedModelMixin, models.Model):
 	sabores = models.TextField(blank=True, null=True, help_text='JSON com sabores múltiplos')
 	tamanho = models.CharField(max_length=1, choices=[('P', 'Pequena'), ('M', 'Média'), ('G', 'Grande')], default='G')
 	borda_chocolate = models.BooleanField(default=False)
+	borda_tipo = models.CharField(max_length=20, choices=[
+		('catupiry', 'Catupiry'),
+		('cheddar', 'Cheddar'),
+		('sem_borda', 'Sem borda'),
+		('catupiry_original', 'Catupiry Original'),
+		('chocolate', 'Chocolate'),
+	], default='catupiry')
 	catupiry_cima = models.CharField(max_length=10, choices=[('nao', 'Não'), ('inteira', 'Inteira'), ('metade', 'Metade')], default='nao')
 	catupiry_borda = models.BooleanField(default=False)
 	

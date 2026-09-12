@@ -11,7 +11,7 @@ class Carrinho:
         self.carrinho = carrinho
     
     def adicionar(self, pizza=None, bebida=None, quantidade=1, preco=None, tamanho='G', borda_chocolate=False,
-                  catupiry_cima='nao', catupiry_borda=False, sabores=None):
+                  catupiry_cima='nao', catupiry_borda=False, sabores=None, borda_tipo='catupiry'):
         if bebida is not None:
             bebida_id = str(bebida.id)
             item_id = f"bebida_{bebida_id}"
@@ -26,6 +26,7 @@ class Carrinho:
                     'borda_chocolate': False,
                     'catupiry_cima': 'nao',
                     'catupiry_borda': False,
+                    'borda_tipo': 'catupiry',
                     'sabores': None,
                     'nome': bebida.nome,
                 }
@@ -52,6 +53,7 @@ class Carrinho:
                 'borda_chocolate': borda_chocolate,
                 'catupiry_cima': catupiry_cima,
                 'catupiry_borda': catupiry_borda,
+                'borda_tipo': borda_tipo,
                 'sabores': sabores,
                 'nome': pizza.nome,
             }

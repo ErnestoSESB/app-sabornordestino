@@ -31,6 +31,8 @@ class Command(BaseCommand):
             {'nome': 'Três Altos', 'taxa': 6.00},
             {'nome': 'Almino Afonso', 'taxa': 6.00},
             {'nome': 'Frutuoso Gomes', 'taxa': 6.00},
+            {'nome': 'Fogueteiro', 'taxa': 6.00},
+            {'nome': 'Baixio de Onça', 'taxa': 6.00},
         ]
         
         for taxa_data in taxas:

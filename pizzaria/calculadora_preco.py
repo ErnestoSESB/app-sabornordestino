@@ -1,7 +1,8 @@
 from decimal import Decimal
 
-def calcular_preco_pizza(tamanho, sabores_especiais_count, total_sabores, 
-                         borda_chocolate=False, catupiry_cima='nao', catupiry_borda=False):
+def calcular_preco_pizza(tamanho, sabores_especiais_count, total_sabores,
+                         borda_chocolate=False, catupiry_cima='nao', catupiry_borda=False,
+                         borda_tipo=None):
     """
     Calcula o preço final da pizza baseado nas regras:
     
@@ -42,10 +43,22 @@ def calcular_preco_pizza(tamanho, sabores_especiais_count, total_sabores,
             adicionais_especiais = {'P': Decimal('2.00'), 'M': Decimal('3.00'), 'G': Decimal('4.00')}
         preco += adicionais_especiais.get(tamanho, Decimal('8.00'))
     
-    # Borda de chocolate
-    if borda_chocolate:
+    borda_tipo_informado = borda_tipo is not None
+    if borda_tipo is None:
+        if borda_chocolate:
+            borda_tipo = 'chocolate'
+        elif catupiry_borda:
+            borda_tipo = 'catupiry_original'
+        else:
+            borda_tipo = 'catupiry'
+
+    if borda_tipo == 'chocolate':
         bordas = {'P': Decimal('6.00'), 'M': Decimal('8.00'), 'G': Decimal('10.00')}
         preco += bordas.get(tamanho, Decimal('10.00'))
+
+    if borda_tipo == 'catupiry_original':
+        bordas = {'P': Decimal('10.00'), 'M': Decimal('12.00'), 'G': Decimal('14.00')}
+        preco += bordas.get(tamanho, Decimal('14.00'))
     
     # Catupiry por cima
     if catupiry_cima == 'inteira':
@@ -56,7 +69,7 @@ def calcular_preco_pizza(tamanho, sabores_especiais_count, total_sabores,
         preco += catupiry_cima_precos.get(tamanho, Decimal('7.00'))
     
     # Catupiry na borda
-    if catupiry_borda:
+    if catupiry_borda and not borda_tipo_informado:
         catupiry_borda_precos = {'P': Decimal('10.00'), 'M': Decimal('12.00'), 'G': Decimal('14.00')}
         preco += catupiry_borda_precos.get(tamanho, Decimal('14.00'))
     
