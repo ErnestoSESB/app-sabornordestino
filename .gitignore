@@ -64,3 +64,11 @@ venv
 
 # Static files collected by Django (se você não versiona os arquivos estáticos de produção)
 # static/
+
+# Ignora pastas de cache do Python
+__pycache__/
+
+# Ignora arquivos compilados individualmente
+*.pyc
+*.pyo
+.pyc
