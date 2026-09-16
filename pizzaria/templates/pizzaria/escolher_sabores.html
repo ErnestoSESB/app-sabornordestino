@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Montar Pizza - Brasa & Brasa</title>
+    <title>Montar Pizza </title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,9 +67,9 @@
                             <div class="select-wrapper">
                                 <select class="custom-select" name="tamanho" id="tamanho" required onchange="calcularPreco()">
                                     <option value="" disabled selected>Selecione...</option>
-                                    <option value="P">Pequena (P) - A partir de R$ 25,00</option>
-                                    <option value="M">Média (M) - A partir de R$ 32,00</option>
-                                    <option value="G">Grande (G) - A partir de R$ 39,00</option>
+                                    <option value="P">Pequena (P)</option>
+                                    <option value="M">Média (M)</option>
+                                    <option value="G">Grande (G)</option>
                                 </select>
                                 <i class="fa-solid fa-chevron-down select-icon"></i>
                             </div>
@@ -127,26 +127,30 @@
                     </div>
 
                     <div class="addons-grid">
-                        <label class="addon-option addon-option--select">
-                            <span class="addon-option__label">Tipo de borda</span>
-                            <select name="borda_tipo" id="borda_tipo" onchange="calcularPreco()">
-                                <option value="catupiry">Catupiry (+R$ 0,00)</option>
-                                <option value="cheddar">Cheddar (+R$ 0,00)</option>
-                                <option value="sem_borda">Sem borda (+R$ 0,00)</option>
-                                <option value="catupiry_original">Catupiry Original (P: +R$ 10 | M: +R$ 12 | G: +R$ 14)</option>
-                                <option value="chocolate">Chocolate (P: +R$ 6 | M: +R$ 8 | G: +R$ 10)</option>
-                            </select>
+                        <label class="addon-option">
+                            <input type="checkbox" name="borda_chocolate" id="borda_chocolate" onchange="controlarBordas(event); calcularPreco()">
+                            <span class="addon-option__box">
+                                <strong>Borda de Chocolate</strong>
+                                <small id="preco-borda-chocolate"></small>
+                            </span>
                         </label>
 
                         <label class="addon-option addon-option--select">
                             <span class="addon-option__label">Catupiry Original por Cima</span>
                             <select name="catupiry_cima" id="catupiry_cima" onchange="calcularPreco()">
                                 <option value="nao">Não</option>
-                                <option value="metade">Metade (P: +R$ 5 | M: +R$ 6 | G: +R$ 7)</option>
-                                <option value="inteira">Inteira (P: +R$ 10 | M: +R$ 12 | G: +R$ 14)</option>
+                                <option value="metade" id="catupiry-cima-metade-option">Metade</option>
+                                <option value="inteira" id="catupiry-cima-inteira-option">Inteira</option>
                             </select>
                         </label>
 
+                        <label class="addon-option">
+                            <input type="checkbox" name="catupiry_borda" id="catupiry_borda" onchange="controlarBordas(event); calcularPreco()">
+                            <span class="addon-option__box">
+                                <strong>Catupiry Original na Borda</strong>
+                                <small id="preco-catupiry-borda"></small>
+                            </span>
+                        </label>
                     </div>
                 </section>
 
@@ -228,7 +232,7 @@
                     <i class="fa-regular fa-clock"></i>
                     <div>
                         <h4>Horário</h4>
-                        <p>18h às 23h</p>
+                        <p>Quarta a Dom · à partir das 18h</p>
                     </div>
                 </div>
             </div>
@@ -244,7 +248,7 @@
                     <p>Pizzas com massa de fermentação natural, assadas no forno a lenha. O sabor que acende a sua fome.</p>
                     <div class="social-links">
                         <a href="https://www.instagram.com/pizzariasabornordestinoo?utm_source=ig_web_button_share_sheet&amp;igsi=ZDNlZDc0MzIxNw=="><i class="fa-brands fa-instagram"></i></a>
-                        <a href="https://api.whatsapp.com/send/?phone=5584920031436&amp;text&amp;type=phone_number&amp;app_absent=0"><i class="fa-brands fa-whatsapp"></i></a>
+                        <a href="https://api.whatsapp.com/send/?phone=5584990346414&amp;text&amp;type=phone_number&amp;app_absent=0"><i class="fa-brands fa-whatsapp"></i></a>
                     </div>
                 </div>
 
@@ -263,7 +267,7 @@
                     <ul>
                         <li><i class="fa-solid fa-location-dot"></i> Av. Lauro Maia - 21, Lucrecia RN</li>
                         <li><i class="fa-solid fa-phone"></i> (84) 920031436</li>
-                        <li><i class="fa-regular fa-clock"></i> 18h às 23h</li>
+                        <li><i class="fa-regular fa-clock"></i> Quarta a Dom · à partir das 18h</li>
                     </ul>
                 </div>
 
@@ -285,7 +289,66 @@
     <script>
         const pizzas = {{ pizzas_json|safe }};
         const pizzasEspeciais = {{ pizzas_especiais_json|safe }};
+        const precos = {{ precos_json|safe }};
         const form = document.getElementById('form-pizza');
+
+        function formatarMoeda(valor) {
+            return Number(valor || 0).toFixed(2).replace('.', ',');
+        }
+
+        function atualizarPrecosExibidos() {
+            const base = precos.base || {};
+            const chocolate = precos.borda_chocolate || {};
+            const catupiryBorda = precos.borda_catupiry_original || {};
+            const catupiryMetade = precos.catupiry_metade || {};
+            const catupiryInteira = precos.catupiry_inteira || {};
+
+            const opcaoP = document.querySelector('#tamanho option[value="P"]');
+            const opcaoM = document.querySelector('#tamanho option[value="M"]');
+            const opcaoG = document.querySelector('#tamanho option[value="G"]');
+
+            if (opcaoP) {
+                opcaoP.textContent = `Pequena (P) - A partir de R$ ${formatarMoeda(base.P)}`;
+            }
+            if (opcaoM) {
+                opcaoM.textContent = `Média (M) - A partir de R$ ${formatarMoeda(base.M)}`;
+            }
+            if (opcaoG) {
+                opcaoG.textContent = `Grande (G) - A partir de R$ ${formatarMoeda(base.G)}`;
+            }
+
+            const chocolateInfo = document.getElementById('preco-borda-chocolate');
+            if (chocolateInfo) {
+                chocolateInfo.textContent =
+                    `P: +R$ ${formatarMoeda(chocolate.P)} | ` +
+                    `M: +R$ ${formatarMoeda(chocolate.M)} | ` +
+                    `G: +R$ ${formatarMoeda(chocolate.G)}`;
+            }
+
+            const catupiryBordaInfo = document.getElementById('preco-catupiry-borda');
+            if (catupiryBordaInfo) {
+                catupiryBordaInfo.textContent =
+                    `P: +R$ ${formatarMoeda(catupiryBorda.P)} | ` +
+                    `M: +R$ ${formatarMoeda(catupiryBorda.M)} | ` +
+                    `G: +R$ ${formatarMoeda(catupiryBorda.G)}`;
+            }
+
+            const metadeOption = document.getElementById('catupiry-cima-metade-option');
+            if (metadeOption) {
+                metadeOption.textContent =
+                    `Metade (P: +R$ ${formatarMoeda(catupiryMetade.P)} | ` +
+                    `M: +R$ ${formatarMoeda(catupiryMetade.M)} | ` +
+                    `G: +R$ ${formatarMoeda(catupiryMetade.G)})`;
+            }
+
+            const inteiraOption = document.getElementById('catupiry-cima-inteira-option');
+            if (inteiraOption) {
+                inteiraOption.textContent =
+                    `Inteira (P: +R$ ${formatarMoeda(catupiryInteira.P)} | ` +
+                    `M: +R$ ${formatarMoeda(catupiryInteira.M)} | ` +
+                    `G: +R$ ${formatarMoeda(catupiryInteira.G)})`;
+            }
+        }
 
         function toggleBebidaOptions() {
             const valor = document.querySelector('input[name="quer_bebida"]:checked')?.value || 'nao';
@@ -371,6 +434,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            atualizarPrecosExibidos();
             toggleBebidaOptions();
         });
 
@@ -437,48 +501,38 @@
                 }
             }
 
-            const precosBase = {'P': 25.00, 'M': 32.00, 'G': 39.00};
-            let preco = precosBase[tamanho];
+            const base = precos.base || {};
+            const especialParcial = precos.especial_parcial || {};
+            const especialTotal = precos.especial_total || {};
+
+            let preco = Number(base[tamanho] || 0);
 
             if (saboresEspeciaisCount > 0) {
                 if (saboresEspeciaisCount === numSabores) {
-                    const adicionaisEspeciais = {'P': 4.00, 'M': 6.00, 'G': 8.00};
-                    preco += adicionaisEspeciais[tamanho];
+                    preco += Number(especialTotal[tamanho] || 0);
                 } else {
-                    const adicionaisEspeciais = {'P': 2.00, 'M': 3.00, 'G': 4.00};
-                    preco += adicionaisEspeciais[tamanho];
+                    preco += Number(especialParcial[tamanho] || 0);
                 }
             }
 
-            const bordaTipo = document.getElementById('borda_tipo').value;
-            const bordaSelect = document.getElementById('borda_tipo');
-            const bordasChocolate = {'P': 6.00, 'M': 8.00, 'G': 10.00};
-            const bordasOriginal = {'P': 10.00, 'M': 12.00, 'G': 14.00};
-            const bordaValores = {
-                catupiry: 'Catupiry (+R$ 0,00)',
-                cheddar: 'Cheddar (+R$ 0,00)',
-                sem_borda: 'Sem borda (+R$ 0,00)',
-                catupiry_original: `Catupiry Original (+R$ ${bordasOriginal[tamanho].toFixed(2).replace('.', ',')})`,
-                chocolate: `Chocolate (+R$ ${bordasChocolate[tamanho].toFixed(2).replace('.', ',')})`,
-            };
-            Array.from(bordaSelect.options).forEach(option => {
-                option.textContent = bordaValores[option.value] || option.textContent;
-            });
-            if (bordaTipo === 'chocolate') {
-                preco += bordasChocolate[tamanho];
-            } else if (bordaTipo === 'catupiry_original') {
-                preco += bordasOriginal[tamanho];
+            if (document.getElementById('borda_chocolate').checked) {
+                const bordaChocolate = precos.borda_chocolate || {};
+                preco += Number(bordaChocolate[tamanho] || 0);
             }
 
             const catupiryCima = document.getElementById('catupiry_cima').value;
             if (catupiryCima === 'inteira') {
-                const catupiry = {'P': 10.00, 'M': 12.00, 'G': 14.00};
-                preco += catupiry[tamanho];
+                const catupiryInteira = precos.catupiry_inteira || {};
+                preco += Number(catupiryInteira[tamanho] || 0);
             } else if (catupiryCima === 'metade') {
-                const catupiry = {'P': 5.00, 'M': 6.00, 'G': 7.00};
-                preco += catupiry[tamanho];
+                const catupiryMetade = precos.catupiry_metade || {};
+                preco += Number(catupiryMetade[tamanho] || 0);
             }
 
+            if (document.getElementById('catupiry_borda').checked) {
+                const catupiryBorda = precos.borda_catupiry_original || {};
+                preco += Number(catupiryBorda[tamanho] || 0);
+            }
 
             let bebidasNomes = [];
             let bebidaPrecoTotal = 0;
@@ -517,11 +571,13 @@
                 linhasResumo.push(`• Pizza ${tamanhoNome[tamanho]} - ${sabores.join(' / ')}`);
             }
 
-            const nomesBorda = {
-                catupiry: 'Borda de Catupiry', cheddar: 'Borda de Cheddar', sem_borda: 'Sem borda',
-                catupiry_original: 'Borda de Catupiry Original', chocolate: 'Borda de Chocolate'
-            };
-            linhasResumo.push(`• ${nomesBorda[bordaTipo]}`);
+            if (document.getElementById('borda_chocolate').checked) {
+                linhasResumo.push('• Borda de Chocolate');
+            }
+
+            if (document.getElementById('catupiry_borda').checked) {
+                linhasResumo.push('• Catupiry na Borda');
+            }
 
             if (catupiryCima !== 'nao') {
                 const labelCatupiry = catupiryCima === 'metade' ? 'Catupiry por Cima (Metade)' : 'Catupiry por Cima (Inteira)';
@@ -540,7 +596,19 @@
             if (precoFinal) precoFinal.textContent = `R$ ${total.toFixed(2)}`;
         }
 
+        function controlarBordas(event) {
+            const bordaChocolate = document.getElementById('borda_chocolate');
+            const catupiryBorda = document.getElementById('catupiry_borda');
+            const origem = event ? event.target.id : null;
+
+            if (bordaChocolate.checked && catupiryBorda.checked) {
+                if (origem === 'borda_chocolate') {
+                    catupiryBorda.checked = false;
+                } else {
+                    bordaChocolate.checked = false;
+                }
+            }
+        }
     </script>
 </body>
 </html>
-

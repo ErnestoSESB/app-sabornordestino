@@ -23,11 +23,6 @@
                     <p>Cadastre os acessos restritos para a equipe.</p>
                 </div>
             </header>
-
-            {% if messages %}
-                {% for message in messages %}<p class="form-message">{{ message }}</p>{% endfor %}
-            {% endif %}
-
             <div class="form-container-card">
                 <h2>Novo garçom</h2>
                 <form method="post" action="{% url 'garcom_adicionar' %}" class="admin-form">

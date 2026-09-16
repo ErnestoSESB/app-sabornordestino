@@ -850,4 +850,660 @@ body.admin-body {
     .bebida-builder-row .btn-remove-item {
         justify-self: end;
     }
+    }
+.pizza-observacao {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+    margin-top: 12px;
+}
+
+.pizza-observacao label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.pizza-observacao textarea {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 76px;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .pizza-observacao {
+        margin-top: 10px;
+    }
+
+    .pizza-observacao textarea {
+        min-height: 90px;
+        font-size: 16px; 
+    }
+}
+.precos-page {
+--precos-primary: #FF5722;
+--precos-primary-hover: #E64A19;
+--precos-bg: #121212;
+--precos-card: #222222;
+--precos-card-secondary: #1A1A1A;
+--precos-input: #161616;
+--precos-border: #333333;
+--precos-text: #FFFFFF;
+--precos-muted: #A0A0A0;
+}
+
+/* ==========================================================================
+CABEÇALHO
+========================================================================== */
+
+.precos-page .precos-header {
+margin-bottom: 30px;
+}
+
+.precos-page .precos-header-content {
+display: flex;
+align-items: center;
+gap: 16px;
+}
+
+.precos-page .precos-title-icon {
+width: 52px;
+height: 52px;
+
+display: flex;
+align-items: center;
+justify-content: center;
+
+flex-shrink: 0;
+
+color: var(--precos-primary);
+background: rgba(255, 87, 34, 0.10);
+
+border: 1px solid rgba(255, 87, 34, 0.20);
+border-radius: 12px;
+
+font-size: 1.25rem;
+
+}
+
+.precos-page .precos-eyebrow {
+display: block;
+
+margin-bottom: 4px;
+
+color: var(--precos-primary);
+
+font-size: 0.72rem;
+font-weight: 700;
+
+letter-spacing: 1.2px;
+text-transform: uppercase;
+
+}
+
+.precos-page .precos-header h1 {
+margin: 0 0 5px;
+
+font-family: var(--font-serif);
+font-size: 2.2rem;
+line-height: 1.15;
+
+}
+
+.precos-page .precos-header p {
+margin: 0;
+
+color: var(--precos-muted);
+font-size: 0.9rem;
+
+}
+
+/* ==========================================================================
+CARD PRINCIPAL
+========================================================================== */
+
+.precos-page .precos-form-card {
+width: 100%;
+max-width: 1100px;
+
+margin: 0 auto;
+
+padding: 28px;
+
+background: var(--precos-card);
+
+border: 1px solid var(--precos-border);
+border-radius: 14px;
+
+box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
+
+}
+
+/* ==========================================================================
+INTRODUÇÃO DO FORMULÁRIO
+========================================================================== */
+
+.precos-page .precos-form-intro {
+display: flex;
+align-items: center;
+
+gap: 14px;
+
+margin-bottom: 26px;
+padding-bottom: 22px;
+
+border-bottom: 1px solid var(--precos-border);
+
+}
+
+.precos-page .precos-intro-icon {
+width: 42px;
+height: 42px;
+
+display: flex;
+align-items: center;
+justify-content: center;
+
+flex-shrink: 0;
+
+background: rgba(255, 255, 255, 0.05);
+
+border: 1px solid var(--precos-border);
+border-radius: 9px;
+
+color: var(--precos-primary);
+
+}
+
+.precos-page .precos-form-intro h2 {
+margin: 0 0 3px;
+
+font-size: 1.05rem;
+font-weight: 700;
+
+}
+
+.precos-page .precos-form-intro p {
+margin: 0;
+
+color: var(--precos-muted);
+
+font-size: 0.84rem;
+line-height: 1.5;
+
+}
+
+/* ==========================================================================
+GRID DE CATEGORIAS
+========================================================================== */
+
+.precos-page .precos-grid {
+display: grid;
+
+grid-template-columns: repeat(2, minmax(0, 1fr));
+
+gap: 18px;
+
+width: 100%;
+
+}
+
+/* ==========================================================================
+CARD DE CADA GRUPO
+========================================================================== */
+
+.precos-page .preco-grupo {
+min-width: 0;
+
+padding: 20px;
+
+background: var(--precos-card-secondary);
+
+border: 1px solid var(--precos-border);
+border-radius: 12px;
+
+transition:
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+}
+
+.precos-page .preco-grupo {
+border-color: rgba(255, 87, 34, 0.35);
+
+box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+
+}
+
+/* ==========================================================================
+CABEÇALHO DO GRUPO
+========================================================================== */
+
+.precos-page .preco-grupo-header {
+display: flex;
+align-items: center;
+
+gap: 12px;
+
+margin-bottom: 18px;
+
+}
+
+.precos-page .preco-grupo-icon {
+width: 38px;
+height: 38px;
+
+display: flex;
+align-items: center;
+justify-content: center;
+
+flex-shrink: 0;
+
+color: var(--precos-primary);
+
+background: rgba(255, 87, 34, 0.10);
+
+border: 1px solid rgba(255, 87, 34, 0.16);
+border-radius: 8px;
+
+font-size: 0.9rem;
+
+}
+
+.precos-page .preco-grupo-header h2 {
+margin: 0;
+
+color: var(--precos-text);
+
+font-size: 1rem;
+font-weight: 700;
+
+}
+
+.precos-page .preco-grupo-header span {
+display: block;
+
+margin-top: 2px;
+
+color: var(--precos-muted);
+
+font-size: 0.72rem;
+
+}
+
+/* ==========================================================================
+CAMPOS DE PREÇO
+========================================================================== */
+
+.precos-page .preco-campos {
+display: grid;
+
+grid-template-columns: repeat(2, minmax(0, 1fr));
+
+gap: 14px;
+
+}
+
+.precos-page .preco-campo {
+min-width: 0;
+margin: 0;
+}
+
+.precos-page .preco-campo label {
+display: flex;
+align-items: center;
+justify-content: space-between;
+
+gap: 8px;
+
+margin-bottom: 7px;
+
+color: var(--precos-text);
+
+font-size: 0.82rem;
+font-weight: 600;
+
+}
+
+.precos-page .preco-campo label small {
+color: var(--precos-muted);
+
+font-size: 0.68rem;
+font-weight: 500;
+
+}
+
+/* ==========================================================================
+INPUT DE PREÇO
+========================================================================== */
+
+.precos-page .preco-input-wrapper {
+position: relative;
+}
+
+.precos-page .preco-prefixo {
+position: absolute;
+
+top: 50%;
+left: 13px;
+
+transform: translateY(-50%);
+
+color: var(--precos-muted);
+
+font-size: 0.82rem;
+font-weight: 600;
+
+pointer-events: none;
+
+}
+
+.precos-page .preco-input-wrapper .form-control {
+width: 100%;
+
+min-height: 46px;
+
+padding: 11px 12px 11px 38px;
+
+background: var(--precos-input);
+
+border: 1px solid var(--precos-border);
+border-radius: 8px;
+
+color: var(--precos-text);
+
+font-size: 0.95rem;
+font-weight: 600;
+
+outline: none;
+
+transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+
+}
+
+.precos-page .preco-input-wrapper .form-control {
+border-color: #444;
+}
+
+.precos-page .preco-input-wrapper .form-control {
+background: #191919;
+
+border-color: var(--precos-primary);
+
+box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.10);
+
+}
+
+/* Remove setas excessivas do number input */
+
+.precos-page input[type="number"]::-webkit-inner-spin-button,
+.precos-page input[type="number"]::-webkit-outer-spin-button {
+opacity: 0.6;
+}
+
+/* ==========================================================================
+RODAPÉ DO FORMULÁRIO
+========================================================================== */
+
+.precos-page .precos-form-footer {
+display: flex;
+align-items: center;
+justify-content: space-between;
+
+gap: 20px;
+
+margin-top: 26px;
+padding-top: 20px;
+
+border-top: 1px solid var(--precos-border);
+
+}
+
+.precos-page .precos-save-info {
+display: flex;
+align-items: center;
+
+gap: 8px;
+
+color: var(--precos-muted);
+
+font-size: 0.78rem;
+
+}
+
+.precos-page .precos-save-info i {
+color: var(--precos-primary);
+}
+
+.precos-page .precos-save-btn {
+min-width: 170px;
+
+min-height: 44px;
+
+border-radius: 8px;
+
+box-shadow: 0 5px 16px rgba(255, 87, 34, 0.12);
+
+}
+
+.precos-page .precos-save-btn {
+transform: translateY(-1px);
+
+box-shadow: 0 7px 20px rgba(255, 87, 34, 0.18);
+
+}
+
+/* ==========================================================================
+TABLET
+========================================================================== */
+
+@media (max-width: 992px) {
+
+.precos-page .precos-form-card {
+    max-width: 100%;
+}
+
+.precos-page .precos-grid {
+    grid-template-columns: 1fr;
+}
+
+}
+
+/* ==========================================================================
+MOBILE
+========================================================================== */
+
+@media (max-width: 768px) {
+
+.precos-page .admin-content {
+    padding: 20px 16px;
+}
+
+.precos-page .precos-header {
+    margin-bottom: 22px;
+}
+
+.precos-page .precos-header-content {
+    align-items: flex-start;
+}
+
+.precos-page .precos-title-icon {
+    width: 46px;
+    height: 46px;
+}
+
+.precos-page .precos-header h1 {
+    font-size: 1.8rem;
+}
+
+.precos-page .precos-header p {
+    font-size: 0.82rem;
+}
+
+.precos-page .precos-form-card {
+    padding: 20px 16px;
+
+    border-radius: 12px;
+}
+
+.precos-page .precos-form-intro {
+    align-items: flex-start;
+
+    margin-bottom: 20px;
+    padding-bottom: 18px;
+}
+
+.precos-page .precos-form-intro p {
+    font-size: 0.8rem;
+}
+
+.precos-page .preco-grupo {
+    padding: 17px;
+}
+
+.precos-page .preco-campos {
+    grid-template-columns: 1fr;
+
+    gap: 13px;
+}
+
+.precos-page .preco-input-wrapper .form-control {
+    min-height: 48px;
+
+    font-size: 16px;
+}
+
+.precos-page .precos-form-footer {
+    align-items: stretch;
+    flex-direction: column;
+
+    gap: 14px;
+}
+
+.precos-page .precos-save-info {
+    justify-content: center;
+
+    text-align: center;
+}
+
+.precos-page .precos-save-btn {
+    width: 100%;
+}
+
+}
+
+/* ==========================================================================
+CELULARES PEQUENOS
+========================================================================== */
+
+@media (max-width: 480px) {
+
+.precos-page .admin-content {
+    padding: 16px 12px;
+}
+
+.precos-page .precos-header-content {
+    gap: 11px;
+}
+
+.precos-page .precos-title-icon {
+    width: 42px;
+    height: 42px;
+
+    font-size: 1rem;
+
+    border-radius: 9px;
+}
+
+.precos-page .precos-eyebrow {
+    font-size: 0.65rem;
+}
+
+.precos-page .precos-header h1 {
+    font-size: 1.55rem;
+}
+
+.precos-page .precos-header p {
+    font-size: 0.76rem;
+}
+
+.precos-page .precos-form-card {
+    padding: 16px 12px;
+}
+
+.precos-page .precos-form-intro {
+    gap: 10px;
+}
+
+.precos-page .precos-intro-icon {
+    width: 36px;
+    height: 36px;
+
+    font-size: 0.8rem;
+}
+
+.precos-page .precos-form-intro h2 {
+    font-size: 0.95rem;
+}
+
+.precos-page .precos-form-intro p {
+    font-size: 0.76rem;
+}
+
+.precos-page .preco-grupo {
+    padding: 14px;
+}
+
+.precos-page .preco-grupo-header {
+    margin-bottom: 15px;
+}
+
+.precos-page .preco-grupo-icon {
+    width: 34px;
+    height: 34px;
+}
+
+.precos-page .preco-grupo-header h2 {
+    font-size: 0.9rem;
+}
+
+.precos-page .preco-grupo-header span {
+    font-size: 0.67rem;
+}
+
+.precos-page .preco-campo label {
+    font-size: 0.78rem;
+}
+
+}
+
+/* ==========================================================================
+TELAS MUITO PEQUENAS
+========================================================================== */
+
+@media (max-width: 360px) {
+
+.precos-page .precos-header h1 {
+    font-size: 1.4rem;
+}
+
+.precos-page .precos-header p {
+    display: none;
+}
+
+.precos-page .precos-form-card {
+    padding: 14px 10px;
+}
+
+.precos-page .preco-grupo {
+    padding: 12px;
+}
+
 }

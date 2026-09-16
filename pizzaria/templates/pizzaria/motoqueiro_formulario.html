@@ -24,10 +24,6 @@
                 </div>
             </header>
 
-            {% if messages %}
-                {% for message in messages %}<p class="form-message">{{ message }}</p>{% endfor %}
-            {% endif %}
-
             <div class="form-container-card">
                 <h2>Novo motoqueiro</h2>
                 <form method="post" action="{% url 'cadastrar_motoqueiro' %}" class="admin-form">
@@ -46,7 +42,7 @@
                     </div>
                     <div class="form-group">
                         <label for="telefone">Telefone / WhatsApp</label>
-                        <input id="telefone" name="telefone" class="form-control" type="text" placeholder="(84) 99999-9999" required>
+                        <input id="telefone" name="telefone" class="form-control" type="text" placeholder="(84) 99999-9999" required maxlength="11">
                     </div>
                     <div class="form-group">
                         <label for="placa_moto">Placa da Moto (Opcional)</label>

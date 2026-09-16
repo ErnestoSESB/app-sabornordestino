@@ -18,8 +18,32 @@ import re
 from functools import wraps
 from .models import Usuario, Motoqueiro 
 from django.views.decorators.csrf import csrf_exempt
+from django.core.exceptions import ValidationError
+from .models import Pizza, Pedido, ItemPedido, Bebida, TaxaEntrega, ConfiguracaoPreco
 
 
+
+def precos_para_javascript():
+    configuracao = ConfiguracaoPreco.obter()
+
+    def por_tamanho(prefixo):
+        return {
+            'P': float(getattr(configuracao, f'{prefixo}_p')),
+            'M': float(getattr(configuracao, f'{prefixo}_m')),
+            'G': float(getattr(configuracao, f'{prefixo}_g')),
+        }
+
+    return json.dumps({
+        'base': por_tamanho('preco'),
+        'especial_parcial': por_tamanho('especial_parcial'),
+        'especial_total': por_tamanho('especial_total'),
+        'borda_catupiry': por_tamanho('borda_catupiry'),
+        'borda_cheddar': por_tamanho('borda_cheddar'),
+        'borda_catupiry_original': por_tamanho('borda_catupiry_original'),
+        'borda_chocolate': por_tamanho('borda_chocolate'),
+        'catupiry_metade': por_tamanho('catupiry_cima_metade'),
+        'catupiry_inteira': por_tamanho('catupiry_cima_inteira'),
+    })
 
 def garcom_user(user):
 	return user.is_authenticated and user.groups.filter(name='Garçons').exists()
@@ -100,7 +124,8 @@ def escolher_sabores(request):
 	return render(request, 'pizzaria/escolher_sabores.html', {
 		'pizzas_json': pizzas_json,
 		'pizzas_especiais_json': pizzas_especiais_json,
-		'bebidas': bebidas
+		'bebidas': bebidas,
+		'precos_json': precos_para_javascript(),
 	})
 
 # Carrinho views
@@ -173,8 +198,8 @@ def carrinho_adicionar_pizza(request):
 		)
 		
 		# Criar descrição
-		tamanhos = {'P': 'Pequena', 'M': 'Média', 'G': 'Grande'}
-		descricao = f"{tamanhos[tamanho]} - {' / '.join(sabores_nomes)}"
+		nomes_tamanho = {'P': 'Pequena', 'M': 'Média', 'G': 'Grande'}
+		descricao = f"{nomes_tamanho[tamanho]} - {' / '.join(sabores_nomes)}"
 		
 		# Pizza principal (primeira selecionada)
 		pizza_principal = get_object_or_404(Pizza, id=sabores_ids[0])
@@ -518,6 +543,64 @@ def painel_bebidas(request):
 	return render(request, 'pizzaria/painel_bebidas.html', {'bebidas': bebidas, 'active_page': 'bebidas'})
 
 @dono_required
+def configurar_precos(request):
+    configuracao = ConfiguracaoPreco.obter()
+
+    grupos = [
+        ('Preços base das pizzas', 'preco'),
+        ('Pizza especial — parte dos sabores', 'especial_parcial'),
+        ('Pizza especial — todos os sabores', 'especial_total'),
+        ('Borda de Catupiry', 'borda_catupiry'),
+        ('Borda de Cheddar', 'borda_cheddar'),
+        ('Borda de Catupiry Original', 'borda_catupiry_original'),
+        ('Borda de Chocolate', 'borda_chocolate'),
+        ('Catupiry por cima — metade', 'catupiry_cima_metade'),
+        ('Catupiry por cima — inteira', 'catupiry_cima_inteira'),
+    ]
+    tamanhos = [('p', 'Pequena'), ('m', 'Média'), ('g', 'Grande')]
+
+    campos = [
+        f'{prefixo}_{tamanho}'
+        for _, prefixo in grupos
+        for tamanho, _ in tamanhos
+    ]
+
+    if request.method == 'POST':
+        for campo in campos:
+            valor = request.POST.get(campo, '0').strip().replace(',', '.')
+            setattr(configuracao, campo, valor or '0')
+
+        try:
+            configuracao.full_clean()
+            configuracao.save()
+            messages.success(request, 'Preços atualizados com sucesso!')
+            return redirect('configurar_precos')
+        except ValidationError:
+            messages.error(
+                request,
+                'Verifique os valores informados. Use apenas números iguais ou maiores que zero.',
+            )
+
+    grupos_template = []
+    for titulo, prefixo in grupos:
+        grupos_template.append({
+            'titulo': titulo,
+            'campos': [
+                {
+                    'nome': f'{prefixo}_{tamanho}',
+                    'rotulo': rotulo,
+                    'valor': getattr(configuracao, f'{prefixo}_{tamanho}'),
+                }
+                for tamanho, rotulo in tamanhos
+            ],
+        })
+
+    return render(request, 'pizzaria/precos.html', {
+        'grupos_preco': grupos_template,
+        'active_page': 'precos',
+    })
+
+@dono_required
 def bebida_adicionar(request):
 	if request.method == 'POST':
 		nome = request.POST.get('nome', '').strip()
@@ -794,6 +877,7 @@ def pedido_adicionar(request):
 		bordas_tipo = request.POST.getlist('borda_tipo[]')
 		catupiry_cima_lista = request.POST.getlist('catupiry_cima[]')
 		catupiry_borda_lista = request.POST.getlist('catupiry_borda[]')
+		observacoes_itens = request.POST.getlist('observacao_item[]')
 		bebidas_ids = request.POST.getlist('bebida_id[]')
 		bebidas_quantidades = request.POST.getlist('bebida_quantidade[]')
 
@@ -831,6 +915,8 @@ def pedido_adicionar(request):
 			except ValueError:
 				quantidade = 1
 
+			observacao_item = valor_da_lista(observacoes_itens, i).strip()
+
 			try:
 				num_sabores = int(valor_da_lista(numeros_sabores, i, '1'))
 			except ValueError:
@@ -864,13 +950,13 @@ def pedido_adicionar(request):
 
 			sabores_json = None
 			if total_sabores > 1:
-				tamanhos = {'P': 'Pequena', 'M': 'Media', 'G': 'Grande'}
+				nomes_tamanho = {'P': 'Pequena', 'M': 'Média', 'G': 'Grande'}
 				nomes = [sabor.nome for sabor in sabores_escolhidos]
 				sabores_json = json.dumps({
 					'num_sabores': total_sabores,
 					'ids': [sabor.id for sabor in sabores_escolhidos],
 					'nomes': nomes,
-					'descricao': f"{tamanhos[tamanho]} - {' / '.join(nomes)}"
+					'descricao': f"{nomes_tamanho[tamanho]} - {' / '.join(nomes)}"
 				})
 
 			ItemPedido.objects.create(
@@ -883,8 +969,9 @@ def pedido_adicionar(request):
 				sabores=sabores_json,
 				borda_chocolate=borda_chocolate,
 				catupiry_cima=catupiry_cima,
-				catupiry_borda=catupiry_borda
-				,borda_tipo=borda_tipo
+				catupiry_borda=catupiry_borda,
+				borda_tipo=borda_tipo,
+				observacao=observacao_item,
 			)
 			total += preco_unitario * quantidade
 
@@ -931,7 +1018,8 @@ def pedido_adicionar(request):
 		'bebidas': bebidas,
 		'taxas_entrega': taxas_entrega,
 		'usuario_e_garcom': garcom_user(request.user),
-		'active_page': 'pedidos'
+		'active_page': 'pedidos',
+		'precos_json': precos_para_javascript(),
 	})
 
 @login_required(login_url='/login/')
@@ -974,36 +1062,68 @@ def pedido_excluir(request, pedido_id):
 	return redirect('painel_pedidos')
 @login_required(login_url='/login/')
 def pedido_imprimir(request, pedido_id):
-	pedido = get_object_or_404(Pedido, id=pedido_id)
-	
-	# Processar itens com sabores
-	itens_processados = []
-	ordem_itens = Case(
-		When(item_tipo='pizza', then=Value(0)),
-		When(item_tipo='bebida', then=Value(1)),
-		default=Value(2),
-		output_field=IntegerField(),
-	)
-	for item in pedido.itens.order_by(ordem_itens, 'id'):
-		item_data = {
-			'item': item,
-			'sabores_data': None
-		}
-		if item.sabores:
-			try:
-				item_data['sabores_data'] = json.loads(unescape(item.sabores))
-			except:
-				pass
-		itens_processados.append(item_data)
-	pizzas_processadas = [item for item in itens_processados if item['item'].item_tipo == 'pizza']
-	bebidas_processadas = [item for item in itens_processados if item['item'].item_tipo == 'bebida']
-	
-	return render(request, 'pizzaria/pedido_imprimir.html', {
-		'pedido': pedido,
-		'itens_processados': itens_processados,
-		'pizzas_processadas': pizzas_processadas,
-		'bebidas_processadas': bebidas_processadas,
-	})
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+
+    itens_processados = []
+    ordem_itens = Case(
+        When(item_tipo='pizza', then=Value(0)),
+        When(item_tipo='bebida', then=Value(1)),
+        default=Value(2),
+        output_field=IntegerField(),
+    )
+
+    for item in pedido.itens.select_related('pizza', 'bebida').order_by(ordem_itens, 'id'):
+        item_data = {
+            'item': item,
+            'sabores_data': None,
+        }
+
+        if item.item_tipo == 'pizza':
+            sabores_data = {}
+
+            if item.sabores:
+                try:
+                    sabores_data = json.loads(unescape(item.sabores))
+                except (TypeError, ValueError):
+                    sabores_data = {}
+
+            sabores_ids = sabores_data.get('ids', [])
+
+            if not sabores_ids and item.pizza_id:
+                sabores_ids = [item.pizza_id]
+
+            pizzas_por_id = Pizza.objects.in_bulk(sabores_ids)
+
+            sabores_detalhados = []
+            for pizza_id in sabores_ids:
+                pizza = pizzas_por_id.get(pizza_id)
+                if pizza:
+                    sabores_detalhados.append({
+                        'nome': pizza.nome,
+                        'ingredientes': pizza.ingredientes,
+                    })
+
+            sabores_data['num_sabores'] = len(sabores_detalhados)
+            sabores_data['sabores_detalhados'] = sabores_detalhados
+            item_data['sabores_data'] = sabores_data
+
+        itens_processados.append(item_data)
+
+    pizzas_processadas = [
+        item for item in itens_processados
+        if item['item'].item_tipo == 'pizza'
+    ]
+    bebidas_processadas = [
+        item for item in itens_processados
+        if item['item'].item_tipo == 'bebida'
+    ]
+
+    return render(request, 'pizzaria/pedido_imprimir.html', {
+        'pedido': pedido,
+        'itens_processados': itens_processados,
+        'pizzas_processadas': pizzas_processadas,
+        'bebidas_processadas': bebidas_processadas,
+    })
 
 def login_view(request):
 	if request.method == 'POST':

@@ -141,6 +141,16 @@
                                             <option value="chocolate">Chocolate (+R$ 6,00 a R$ 10,00)</option>
                                         </select>
                                     </div>
+                                    <div class="pizza-observacao">
+                                        <label for="observacao-pizza-0">Observação desta pizza</label>
+                                        <textarea
+                                            id="observacao-pizza-0"
+                                            name="observacao_item[]"
+                                            class="form-control"
+                                            rows="2"
+                                            placeholder="Ex.: sem cebola, pouco queijo..."
+                                        ></textarea>
+                                    </div>
                                     <div class="sabor-field">
                                         <label for="catupiry-cima-0">Catupiry Original por cima</label>
                                         <select id="catupiry-cima-0" name="catupiry_cima[]" class="form-control">
@@ -181,6 +191,12 @@
     </div>
 
     <script>
+        const precosConfigurados = {{ precos_json|safe }};
+
+        function formatarPreco(valor) {
+            return Number(valor || 0).toFixed(2).replace('.', ',');
+        }
+
         function atualizarCamposSabores(selectEl) {
             const item = selectEl.closest('.item-builder-row');
             const quantidadeSabores = parseInt(selectEl.value || '1', 10);
@@ -212,58 +228,87 @@
 
         function calcularPrecoPizza(item) {
             const tamanho = item.querySelector('[name="tamanho[]"]').value;
-            const quantidade = parseInt(item.querySelector('[name="quantidade[]"]').value || '1', 10) || 1;
-            const numSabores = parseInt(item.querySelector('[name="num_sabores[]"]').value || '1', 10);
-            const precosBase = { P: 25, M: 32, G: 39 };
-            const adicionaisEspeciais = {
-                parcial: { P: 2, M: 3, G: 4 },
-                total: { P: 4, M: 6, G: 8 },
-            };
-            let preco = precosBase[tamanho] || 39;
-            const sabores = Array.from(item.querySelectorAll('[name="sabor_1[]"], [name="sabor_2[]"], [name="sabor_3[]"]'))
-                .filter(select => !select.disabled && select.value);
-            const especiais = sabores.filter(select => select.options[select.selectedIndex]?.dataset.especial === '1').length;
+            const quantidade = parseInt(
+                item.querySelector('[name="quantidade[]"]').value || '1',
+                10,
+            ) || 1;
+
+            const sabores = Array.from(
+                item.querySelectorAll(
+                    '[name="sabor_1[]"], [name="sabor_2[]"], [name="sabor_3[]"]',
+                ),
+            ).filter(select => !select.disabled && select.value);
+
+            const especiais = sabores.filter(
+                select => select.options[select.selectedIndex]?.dataset.especial === '1',
+            ).length;
+
+            let preco = precosConfigurados.base[tamanho] || 0;
 
             if (especiais > 0) {
-                const tabela = especiais === sabores.length ? adicionaisEspeciais.total : adicionaisEspeciais.parcial;
-                preco += tabela[tamanho] || 0;
+                const adicional = especiais === sabores.length
+                    ? precosConfigurados.especial_total[tamanho]
+                    : precosConfigurados.especial_parcial[tamanho];
+
+                preco += adicional || 0;
             }
 
             const bordaTipo = item.querySelector('[name="borda_tipo[]"]').value;
             const catupiryCima = item.querySelector('[name="catupiry_cima[]"]').value;
-            const bordasChocolate = { P: 6, M: 8, G: 10 };
-            const catupiryMetade = { P: 5, M: 6, G: 7 };
-            const catupiryInteira = { P: 10, M: 12, G: 14 };
+
+            const valoresBorda = {
+                catupiry: precosConfigurados.borda_catupiry[tamanho],
+                cheddar: precosConfigurados.borda_cheddar[tamanho],
+                catupiry_original: precosConfigurados.borda_catupiry_original[tamanho],
+                chocolate: precosConfigurados.borda_chocolate[tamanho],
+            };
 
             const bordaSelect = item.querySelector('[name="borda_tipo[]"]');
             const catupiryCimaSelect = item.querySelector('[name="catupiry_cima[]"]');
-            const bordaValores = {
-                catupiry: 'Catupiry (+R$ 0,00)',
-                cheddar: 'Cheddar (+R$ 0,00)',
+
+            const bordaValoresTexto = {
+                catupiry: `Catupiry (+R$ ${formatarPreco(valoresBorda.catupiry)})`,
+                cheddar: `Cheddar (+R$ ${formatarPreco(valoresBorda.cheddar)})`,
                 sem_borda: 'Sem borda (+R$ 0,00)',
-                catupiry_original: `Catupiry Original (+R$ ${(catupiryInteira[tamanho] || 0).toFixed(2).replace('.', ',')})`,
-                chocolate: `Chocolate (+R$ ${(bordasChocolate[tamanho] || 0).toFixed(2).replace('.', ',')})`,
+                catupiry_original: `Catupiry Original (+R$ ${formatarPreco(valoresBorda.catupiry_original)})`,
+                chocolate: `Chocolate (+R$ ${formatarPreco(valoresBorda.chocolate)})`,
             };
+
             Array.from(bordaSelect.options).forEach(option => {
-                option.textContent = bordaValores[option.value] || option.textContent;
+                option.textContent = bordaValoresTexto[option.value] || option.textContent;
             });
-            catupiryCimaSelect.options[0].textContent = 'Não (+R$ 0)';
-            catupiryCimaSelect.options[1].textContent = `Metade (+R$ ${(catupiryMetade[tamanho] || 0).toFixed(2).replace('.', ',')})`;
-            catupiryCimaSelect.options[2].textContent = `Inteira (+R$ ${(catupiryInteira[tamanho] || 0).toFixed(2).replace('.', ',')})`;
-            if (bordaTipo === 'chocolate') preco += bordasChocolate[tamanho] || 0;
-            if (bordaTipo === 'catupiry_original') preco += catupiryInteira[tamanho] || 0;
-            if (catupiryCima === 'metade') preco += catupiryMetade[tamanho] || 0;
-            if (catupiryCima === 'inteira') preco += catupiryInteira[tamanho] || 0;
+
+            catupiryCimaSelect.options[0].textContent = 'Não (+R$ 0,00)';
+            catupiryCimaSelect.options[1].textContent =
+                `Metade (+R$ ${formatarPreco(precosConfigurados.catupiry_metade[tamanho])})`;
+            catupiryCimaSelect.options[2].textContent =
+                `Inteira (+R$ ${formatarPreco(precosConfigurados.catupiry_inteira[tamanho])})`;
+
+            preco += valoresBorda[bordaTipo] || 0;
+
+            if (catupiryCima === 'metade') {
+                preco += precosConfigurados.catupiry_metade[tamanho] || 0;
+            }
+
+            if (catupiryCima === 'inteira') {
+                preco += precosConfigurados.catupiry_inteira[tamanho] || 0;
+            }
 
             const total = preco * quantidade;
             const totalEl = item.querySelector('.pizza-price strong');
+
             if (totalEl) {
-                totalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+                totalEl.textContent = `R$ ${formatarPreco(total)}`;
             }
         }
 
         function configurarItem(item) {
             item.querySelectorAll('input[type="number"]').forEach(input => input.value = '1');
+
+            item.querySelectorAll('textarea[name="observacao_item[]"]').forEach(textarea => {
+                textarea.value = '';
+            });
+
             item.querySelectorAll('select').forEach(select => {
                 if (select.name === 'num_sabores[]') {
                     select.value = '1';

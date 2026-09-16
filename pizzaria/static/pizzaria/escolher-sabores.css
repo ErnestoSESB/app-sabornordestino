@@ -498,3 +498,45 @@
         min-height: 100px;
     }
 }
+#bebidas-container {
+    display: grid;
+    gap: 10px;
+}
+
+.bebida-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.bebida-item select {
+    flex: 1;
+    min-width: 0;
+}
+
+.bebida-remove-btn {
+    flex: 0 0 auto;
+    border: 1px solid #dc3545;
+    border-radius: 8px;
+    background: transparent;
+    color: #dc3545;
+    padding: 10px 12px;
+    cursor: pointer;
+}
+
+.bebida-remove-btn:hover {
+    background: #dc3545;
+    color: #fff;
+}
+
+@media (max-width: 600px) {
+    .bebida-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .bebida-remove-btn {
+        width: 100%;
+    }
+}

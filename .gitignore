@@ -72,3 +72,11 @@ __pycache__/
 *.pyc
 *.pyo
 .pyc
+
+deploy.zip
+db.sqlite3
+db.sqlite3
+
+pycache
+.pycache
+__pycache__

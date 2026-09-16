@@ -46,6 +46,8 @@ urlpatterns = [
     path('painel/pedidos/status/<int:pedido_id>/', views.pedido_alterar_status, name='pedido_alterar_status'),
     path('painel/pedidos/excluir/<int:pedido_id>/', views.pedido_excluir, name='pedido_excluir'),
     path('painel/pedidos/imprimir/<int:pedido_id>/', views.pedido_imprimir, name='pedido_imprimir'),
+    path('painel/configurar-precos/', views.configurar_precos, name='configurar_precos',
+),
     
 ]
 

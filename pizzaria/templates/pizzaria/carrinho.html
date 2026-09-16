@@ -63,6 +63,7 @@
 
     <section class="checkout-section">
       <div class="container checkout-container">
+
         {% if pedidos_em_andamento and not itens %}
         {% for pedido_em_andamento in pedidos_em_andamento %}
         <div class="checkout-card tracking-card">
@@ -164,57 +165,66 @@
             </ul>
           {% endif %}
 
-          {% if item.tipo != 'bebida' and item.tem_adicionais %}
-          <div class="item-addons">
-            <p><strong>Adicionais:</strong></p>
-            <ul>
-              {% if item.borda_chocolate %}
-              <li>
-                <span>Borda de Chocolate</span>
-                <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
-                  {% csrf_token %}
-                  <input type="hidden" name="adicional" value="borda_chocolate" />
-                  <button type="submit" class="remove-addon-btn" aria-label="Remover borda de chocolate" title="Remover adicional">
-                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
-                  </button>
-                </form>
-              </li>
-              {% endif %} {% if item.catupiry_cima == 'inteira' %}
-              <li>
-                <span>Catupiry por Cima (Inteira)</span>
-                <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
-                  {% csrf_token %}
-                  <input type="hidden" name="adicional" value="catupiry_cima" />
-                  <button type="submit" class="remove-addon-btn" aria-label="Remover catupiry por cima" title="Remover adicional">
-                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
-                  </button>
-                </form>
-              </li>
-              {% endif %} {% if item.catupiry_cima == 'metade' %}
-              <li>
-                <span>Catupiry por Cima (Metade)</span>
-                <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
-                  {% csrf_token %}
-                  <input type="hidden" name="adicional" value="catupiry_cima" />
-                  <button type="submit" class="remove-addon-btn" aria-label="Remover catupiry por cima" title="Remover adicional">
-                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
-                  </button>
-                </form>
-              </li>
-              {% endif %} {% if item.catupiry_borda %}
-              <li>
-                <span>Catupiry na Borda</span>
-                <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
-                  {% csrf_token %}
-                  <input type="hidden" name="adicional" value="catupiry_borda" />
-                  <button type="submit" class="remove-addon-btn" aria-label="Remover catupiry na borda" title="Remover adicional">
-                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
-                  </button>
-                </form>
-              </li>
-              {% endif %}
-            </ul>
-          </div>
+          {# ===== ADICIONAIS CORRIGIDOS (agora considera borda_tipo também) ===== #}
+          {% if item.tipo != 'bebida' %}
+            {% if item.borda_chocolate or item.borda_tipo == 'chocolate' or item.catupiry_cima != 'nao' or item.catupiry_borda %}
+            <div class="item-addons">
+              <p><strong>Adicionais:</strong></p>
+              <ul>
+                {% if item.borda_chocolate or item.borda_tipo == 'chocolate' %}
+                <li>
+                  <span>Borda de Chocolate</span>
+                  <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="adicional" value="borda_chocolate" />
+                    <button type="submit" class="remove-addon-btn" aria-label="Remover borda de chocolate" title="Remover adicional">
+                      <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                    </button>
+                  </form>
+                </li>
+                {% endif %}
+
+                {% if item.catupiry_cima == 'inteira' %}
+                <li>
+                  <span>Catupiry por Cima (Inteira)</span>
+                  <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="adicional" value="catupiry_cima" />
+                    <button type="submit" class="remove-addon-btn" aria-label="Remover catupiry por cima" title="Remover adicional">
+                      <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                    </button>
+                  </form>
+                </li>
+                {% endif %}
+
+                {% if item.catupiry_cima == 'metade' %}
+                <li>
+                  <span>Catupiry por Cima (Metade)</span>
+                  <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="adicional" value="catupiry_cima" />
+                    <button type="submit" class="remove-addon-btn" aria-label="Remover catupiry por cima" title="Remover adicional">
+                      <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                    </button>
+                  </form>
+                </li>
+                {% endif %}
+
+                {% if item.catupiry_borda %}
+                <li>
+                  <span>Catupiry na Borda</span>
+                  <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="adicional" value="catupiry_borda" />
+                    <button type="submit" class="remove-addon-btn" aria-label="Remover catupiry na borda" title="Remover adicional">
+                      <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                    </button>
+                  </form>
+                </li>
+                {% endif %}
+              </ul>
+            </div>
+            {% endif %}
           {% endif %}
 
           <div class="item-subtotal">
@@ -232,7 +242,9 @@
             </button>
           </form>
         </div>
-        {% endfor %} {% endif %}
+        {% endfor %}
+        {% endif %}
+
         {% if itens %}
           <div class="checkout-card order-summary">
               <h3 class="card-title">Resumo do Pedido</h3>
@@ -255,7 +267,8 @@
                               </span>
                               <span>R$ {{ item.total }}</span>
                           </div>
-                          {% if item.borda_chocolate %}
+
+                          {% if item.borda_chocolate or item.borda_tipo == 'chocolate' %}
                               <div class="summary-line summary-addon-line">
                                   <span>Borda de Chocolate</span>
                                   <span>
@@ -270,6 +283,7 @@
                                   </span>
                               </div>
                           {% endif %}
+
                           {% if item.catupiry_cima == 'metade' %}
                               <div class="summary-line summary-addon-line">
                                   <span>Catupiry por Cima (Metade)</span>
@@ -285,6 +299,7 @@
                                   </span>
                               </div>
                           {% endif %}
+
                           {% if item.catupiry_cima == 'inteira' %}
                               <div class="summary-line summary-addon-line">
                                   <span>Catupiry por Cima (Inteira)</span>
@@ -300,6 +315,7 @@
                                   </span>
                               </div>
                           {% endif %}
+
                           {% if item.catupiry_borda %}
                               <div class="summary-line summary-addon-line">
                                   <span>Catupiry na Borda</span>
@@ -318,28 +334,29 @@
                       {% endif %}
                   {% endfor %}
               </div>
+
+              <div class="summary-line">
+                <span>Subtotal:</span>
+                <span>R$ {{ carrinho.get_total }}</span>
+              </div>
+              <div class="summary-line text-primary">
+                <span>Taxa de Entrega:</span>
+                <span id="taxa-entrega">R$ 0,00</span>
+              </div>
+
+              <hr class="divider" />
+
+              <div class="summary-line total">
+                <span>Total:</span>
+                <span id="total-final">R$ {{ carrinho.get_total }}</span>
+              </div>
           </div>
-          {% else %}
-          <div class="summary-empty">
+        {% else %}
+          <div class="checkout-card order-summary">
+            <div class="summary-empty">
               Seu pedido ainda está vazio. Adicione uma pizza ou bebida para ver o resumo.
+            </div>
           </div>
-
-          <div class="summary-line">
-            <span>Subtotal:</span>
-            <span>R$ {{ carrinho.get_total }}</span>
-          </div>
-          <div class="summary-line text-primary">
-            <span>Taxa de Entrega:</span>
-            <span id="taxa-entrega">R$ 0,00</span>
-          </div>
-
-          <hr class="divider" />
-
-          <div class="summary-line total">
-            <span>Total:</span>
-            <span id="total-final">R$ {{ carrinho.get_total }}</span>
-          </div>
-        </div>
         {% endif %}
 
         {% if not itens %}

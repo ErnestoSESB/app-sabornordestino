@@ -1,0 +1,169 @@
+{% load static %}
+
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+
+<head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Configurar Preços</title>
+
+<link rel="stylesheet" href="{% static 'pizzaria/gerenciar.css' %}">
+<link rel="stylesheet" href="{% static 'pizzaria/painel_sidebar.css' %}">
+
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+>
+
+</head>
+
+<body class="admin-body precos-page">
+
+<div class="admin-layout">
+
+    {% include 'pizzaria/partials/painel_sidebar.html' with active_page='precos' %}
+
+    <main class="admin-content">
+
+        <header class="admin-header precos-header">
+
+            <div class="precos-header-content">
+
+                <div class="precos-title-icon">
+                    <i class="fa-solid fa-tags"></i>
+                </div>
+
+                <div>
+                    <span class="precos-eyebrow">
+                        Configuração do sistema
+                    </span>
+
+                    <h1>Configurar Preços</h1>
+
+                    <p>
+                        Altere os preços utilizados no site e nos pedidos do painel.
+                    </p>
+                </div>
+
+            </div>
+
+        </header>
+
+        <div class="form-container-card precos-form-card">
+
+            <div class="precos-form-intro">
+
+                <div class="precos-intro-icon">
+                    <i class="fa-solid fa-sliders"></i>
+                </div>
+
+                <div>
+                    <h2>Valores do cardápio</h2>
+
+                    <p>
+                        Atualize os valores abaixo. As alterações serão utilizadas
+                        nos pedidos realizados pelo sistema.
+                    </p>
+                </div>
+
+            </div>
+
+            <form method="post" class="admin-form precos-form">
+
+                {% csrf_token %}
+
+                <div class="precos-grid">
+
+                    {% for grupo in grupos_preco %}
+
+                        <section class="preco-grupo">
+
+                            <div class="preco-grupo-header">
+
+                                <div class="preco-grupo-icon">
+                                    <i class="fa-solid fa-utensils"></i>
+                                </div>
+
+                                <div>
+                                    <h2>{{ grupo.titulo }}</h2>
+
+                                    <span>
+                                        Defina os valores desta categoria
+                                    </span>
+                                </div>
+
+                            </div>
+
+                            <div class="preco-campos">
+
+                                {% for campo in grupo.campos %}
+
+                                    <div class="form-group preco-campo">
+
+                                        <label for="{{ campo.nome }}">
+                                            <span>{{ campo.rotulo }}</span>
+                                            <small>R$</small>
+                                        </label>
+
+                                        <div class="preco-input-wrapper">
+
+                                            <span class="preco-prefixo">
+                                                R$
+                                            </span>
+
+                                            <input
+                                                type="number"
+                                                id="{{ campo.nome }}"
+                                                name="{{ campo.nome }}"
+                                                class="form-control"
+                                                value="{{ campo.valor }}"
+                                                min="0"
+                                                step="0.01"
+                                                required
+                                                inputmode="decimal"
+                                            >
+
+                                        </div>
+
+                                    </div>
+
+                                {% endfor %}
+
+                            </div>
+
+                        </section>
+
+                    {% endfor %}
+
+                </div>
+
+                <div class="precos-form-footer">
+
+                    <div class="precos-save-info">
+                        <i class="fa-solid fa-circle-info"></i>
+
+                        <span>
+                            Confira os valores antes de salvar.
+                        </span>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary precos-save-btn"
+                    >
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Salvar preços</span>
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </main>
+
+</div>
+
+</body> </html>

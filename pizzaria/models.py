@@ -2,6 +2,7 @@ from django.db import models
 from .utils import SanitizedModelMixin
 from django.contrib.auth.models import User
 
+
 class Usuario:
     def __init__(self, id_usuario, nome, email, tipo_usuario):
         self.id_usuario = id_usuario
@@ -33,6 +34,56 @@ class TaxaEntrega(SanitizedModelMixin, models.Model):
 		verbose_name = 'Taxa de Entrega'
 		verbose_name_plural = 'Taxas de Entrega'
 		ordering = ['nome']
+
+class ConfiguracaoPreco(SanitizedModelMixin, models.Model):
+    # Pizzas base
+    preco_p = models.DecimalField(max_digits=6, decimal_places=2, default=25)
+    preco_m = models.DecimalField(max_digits=6, decimal_places=2, default=32)
+    preco_g = models.DecimalField(max_digits=6, decimal_places=2, default=39)
+
+    # Pizza especial: quando apenas parte dos sabores é especial
+    especial_parcial_p = models.DecimalField(max_digits=6, decimal_places=2, default=2)
+    especial_parcial_m = models.DecimalField(max_digits=6, decimal_places=2, default=3)
+    especial_parcial_g = models.DecimalField(max_digits=6, decimal_places=2, default=4)
+
+    # Pizza especial: quando todos os sabores são especiais
+    especial_total_p = models.DecimalField(max_digits=6, decimal_places=2, default=4)
+    especial_total_m = models.DecimalField(max_digits=6, decimal_places=2, default=6)
+    especial_total_g = models.DecimalField(max_digits=6, decimal_places=2, default=8)
+
+    # Bordas
+    borda_catupiry_p = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    borda_catupiry_m = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    borda_catupiry_g = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+
+    borda_cheddar_p = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    borda_cheddar_m = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    borda_cheddar_g = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+
+    borda_catupiry_original_p = models.DecimalField(max_digits=6, decimal_places=2, default=10)
+    borda_catupiry_original_m = models.DecimalField(max_digits=6, decimal_places=2, default=12)
+    borda_catupiry_original_g = models.DecimalField(max_digits=6, decimal_places=2, default=14)
+
+    borda_chocolate_p = models.DecimalField(max_digits=6, decimal_places=2, default=6)
+    borda_chocolate_m = models.DecimalField(max_digits=6, decimal_places=2, default=8)
+    borda_chocolate_g = models.DecimalField(max_digits=6, decimal_places=2, default=10)
+
+    # Catupiry por cima
+    catupiry_cima_metade_p = models.DecimalField(max_digits=6, decimal_places=2, default=5)
+    catupiry_cima_metade_m = models.DecimalField(max_digits=6, decimal_places=2, default=6)
+    catupiry_cima_metade_g = models.DecimalField(max_digits=6, decimal_places=2, default=7)
+
+    catupiry_cima_inteira_p = models.DecimalField(max_digits=6, decimal_places=2, default=10)
+    catupiry_cima_inteira_m = models.DecimalField(max_digits=6, decimal_places=2, default=12)
+    catupiry_cima_inteira_g = models.DecimalField(max_digits=6, decimal_places=2, default=14)
+
+    @classmethod
+    def obter(cls):
+        configuracao, _ = cls.objects.get_or_create(pk=1)
+        return configuracao
+
+    def __str__(self):
+        return 'Configuração de preços'
 
 
 class Pizza(SanitizedModelMixin, models.Model):
@@ -131,6 +182,7 @@ class ItemPedido(SanitizedModelMixin, models.Model):
 	], default='catupiry')
 	catupiry_cima = models.CharField(max_length=10, choices=[('nao', 'Não'), ('inteira', 'Inteira'), ('metade', 'Metade')], default='nao')
 	catupiry_borda = models.BooleanField(default=False)
+	observacao = models.TextField(blank=True, default='')
 	
 	def __str__(self):
 		if self.item_tipo == 'bebida' and self.bebida:
