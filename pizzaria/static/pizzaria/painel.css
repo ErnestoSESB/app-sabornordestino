@@ -176,6 +176,108 @@
     letter-spacing: 1px;
 }
 
+.date-filter {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin: -4px 0 20px;
+    padding: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+}
+
+.date-filter-fields,
+.date-filter-actions {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.date-filter label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.date-filter input {
+    padding: 9px 10px;
+    color: var(--text-light);
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.date-filter-submit,
+.date-filter-clear {
+    padding: 9px 14px;
+    border: 0;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.date-filter-submit {
+    color: #fff;
+    background: var(--primary);
+}
+
+.date-filter-error {
+    margin: -8px 0 16px;
+    color: #e53935;
+    font-size: 0.9rem;
+}
+
+.date-filter-clear {
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+}
+
+.filtered-period-summary {
+    display: flex;
+    gap: 40px;
+    margin-top: 16px;
+    padding: 18px 20px;
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.25);
+    border-radius: 10px;
+}
+
+.filtered-period-summary div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.filtered-period-summary strong {
+    color: var(--text-light);
+    font-size: 1.35rem;
+}
+
+.filtered-period-summary span {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+    .date-filter,
+    .date-filter-fields,
+    .date-filter-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .filtered-period-summary {
+        gap: 20px;
+        flex-direction: column;
+    }
+}
+
 .metrics-grid {
     display: grid;
     gap: 20px;

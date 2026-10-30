@@ -1,6 +1,10 @@
 from django.db import models
 from .utils import SanitizedModelMixin
 from django.contrib.auth.models import User
+from django.utils import timezone
+from django.db import models, transaction
+from django.utils import timezone
+
 
 class Usuario:
     def __init__(self, id_usuario, nome, email, tipo_usuario):
@@ -33,6 +37,56 @@ class TaxaEntrega(SanitizedModelMixin, models.Model):
 		verbose_name = 'Taxa de Entrega'
 		verbose_name_plural = 'Taxas de Entrega'
 		ordering = ['nome']
+
+class ConfiguracaoPreco(SanitizedModelMixin, models.Model):
+    # Pizzas base
+    preco_p = models.DecimalField(max_digits=6, decimal_places=2, default=25)
+    preco_m = models.DecimalField(max_digits=6, decimal_places=2, default=32)
+    preco_g = models.DecimalField(max_digits=6, decimal_places=2, default=39)
+
+    # Pizza especial: quando apenas parte dos sabores é especial
+    especial_parcial_p = models.DecimalField(max_digits=6, decimal_places=2, default=2)
+    especial_parcial_m = models.DecimalField(max_digits=6, decimal_places=2, default=3)
+    especial_parcial_g = models.DecimalField(max_digits=6, decimal_places=2, default=4)
+
+    # Pizza especial: quando todos os sabores são especiais
+    especial_total_p = models.DecimalField(max_digits=6, decimal_places=2, default=4)
+    especial_total_m = models.DecimalField(max_digits=6, decimal_places=2, default=6)
+    especial_total_g = models.DecimalField(max_digits=6, decimal_places=2, default=8)
+
+    # Bordas
+    borda_catupiry_p = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    borda_catupiry_m = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    borda_catupiry_g = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+
+    borda_cheddar_p = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    borda_cheddar_m = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    borda_cheddar_g = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+
+    borda_catupiry_original_p = models.DecimalField(max_digits=6, decimal_places=2, default=10)
+    borda_catupiry_original_m = models.DecimalField(max_digits=6, decimal_places=2, default=12)
+    borda_catupiry_original_g = models.DecimalField(max_digits=6, decimal_places=2, default=14)
+
+    borda_chocolate_p = models.DecimalField(max_digits=6, decimal_places=2, default=6)
+    borda_chocolate_m = models.DecimalField(max_digits=6, decimal_places=2, default=8)
+    borda_chocolate_g = models.DecimalField(max_digits=6, decimal_places=2, default=10)
+
+    # Catupiry por cima
+    catupiry_cima_metade_p = models.DecimalField(max_digits=6, decimal_places=2, default=5)
+    catupiry_cima_metade_m = models.DecimalField(max_digits=6, decimal_places=2, default=6)
+    catupiry_cima_metade_g = models.DecimalField(max_digits=6, decimal_places=2, default=7)
+
+    catupiry_cima_inteira_p = models.DecimalField(max_digits=6, decimal_places=2, default=10)
+    catupiry_cima_inteira_m = models.DecimalField(max_digits=6, decimal_places=2, default=12)
+    catupiry_cima_inteira_g = models.DecimalField(max_digits=6, decimal_places=2, default=14)
+
+    @classmethod
+    def obter(cls):
+        configuracao, _ = cls.objects.get_or_create(pk=1)
+        return configuracao
+
+    def __str__(self):
+        return 'Configuração de preços'
 
 
 class Pizza(SanitizedModelMixin, models.Model):
@@ -78,6 +132,19 @@ class Bebida(SanitizedModelMixin, models.Model):
 
 
 class Pedido(SanitizedModelMixin, models.Model):
+
+	data_pedido = models.DateField(
+    default=timezone.localdate,
+    editable=False,
+    db_index=True
+	)
+
+	numero_do_dia = models.PositiveIntegerField(
+		null=True,
+		blank=True,
+		editable=False
+	)
+
 	STATUS_CHOICES = [
 		("Novo", "Novo"),
 		("Em andamento", "Em andamento"),
@@ -104,9 +171,11 @@ class Pedido(SanitizedModelMixin, models.Model):
 	reaberto_em = models.DateTimeField(null=True, blank=True)
 	fechado_em = models.DateTimeField(null=True, blank=True)
 	motoqueiro = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='entregas_motoqueiro', help_text="Entregador responsável")
+	
 
 	def __str__(self):
 		return f"Pedido #{self.id} - {self.cliente}"
+
 
 class ItemPedido(SanitizedModelMixin, models.Model):
 	TIPO_CHOICES = [
@@ -131,6 +200,7 @@ class ItemPedido(SanitizedModelMixin, models.Model):
 	], default='catupiry')
 	catupiry_cima = models.CharField(max_length=10, choices=[('nao', 'Não'), ('inteira', 'Inteira'), ('metade', 'Metade')], default='nao')
 	catupiry_borda = models.BooleanField(default=False)
+	observacao = models.TextField(blank=True, default='')
 	
 	def __str__(self):
 		if self.item_tipo == 'bebida' and self.bebida:
@@ -142,3 +212,29 @@ class ItemPedido(SanitizedModelMixin, models.Model):
 	@property
 	def subtotal(self):
 		return self.quantidade * self.preco_unitario
+
+class SequenciaPedidoDiaria(models.Model):
+    data = models.DateField(unique=True)
+    ultimo_numero = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.data} - Pedido {self.ultimo_numero}"
+
+def gerar_numero_pedido_diario(data=None):
+    if data is None:
+        data = timezone.localdate()
+
+    with transaction.atomic():
+        sequencia, _ = (
+            SequenciaPedidoDiaria.objects
+            .select_for_update()
+            .get_or_create(
+                data=data,
+                defaults={'ultimo_numero': 0}
+            )
+        )
+
+        sequencia.ultimo_numero += 1
+        sequencia.save(update_fields=['ultimo_numero'])
+
+        return sequencia.ultimo_numero

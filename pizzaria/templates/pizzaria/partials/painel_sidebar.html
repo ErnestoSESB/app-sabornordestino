@@ -14,7 +14,9 @@
         <div class="nav-submenu">
             <a href="{% url 'painel_pizzas' %}" class="nav-item {% if active_page == 'pizzas' %}active{% endif %}"><i class="fa-solid fa-pizza-slice"></i> Gerenciar Pizzas</a>
             <a href="{% url 'painel_bebidas' %}" class="nav-item {% if active_page == 'bebidas' %}active{% endif %}"><i class="fa-solid fa-wine-glass"></i> Gerenciar Bebidas</a>
+            <a href="{% url 'configurar_precos' %}" class="nav-item {% if active_page == 'precos' %}active{% endif %}"><i class="fa-solid fa-tags"></i> Configurar Preços</a>
         </div>
+        
 
         <div class="nav-category">Vendas</div>
         <div class="nav-submenu">

@@ -35,7 +35,9 @@ urlpatterns = [
     path('painel/bebidas/editar/<int:bebida_id>/', views.bebida_editar, name='bebida_editar'),
     path('painel/bebidas/excluir/<int:bebida_id>/', views.bebida_excluir, name='bebida_excluir'),
     path('painel/pedidos/', views.painel_pedidos, name='painel_pedidos'),
+    path('painel/pedidos/lista/', views.painel_pedidos_lista, name='painel_pedidos_lista'),
     path('painel/historico-pedidos/', views.historico_pedidos, name='historico_pedidos'),
+    path('painel/historico-pedidos/lista/', views.historico_pedidos_lista, name='historico_pedidos_lista'),
     path('painel/garcons/', views.painel_garcons, name='painel_garcons'),
     path('painel/garcons/adicionar/', views.garcom_adicionar, name='garcom_adicionar'),
     path('painel/garcons/excluir/<int:user_id>/', views.garcom_excluir, name='garcom_excluir'),
@@ -44,8 +46,11 @@ urlpatterns = [
     path('painel/pedidos/reabrir/<int:pedido_id>/', views.pedido_reabrir, name='pedido_reabrir'),
     path('painel/pedidos/adicionar/', views.pedido_adicionar, name='pedido_adicionar'),
     path('painel/pedidos/status/<int:pedido_id>/', views.pedido_alterar_status, name='pedido_alterar_status'),
+    path('painel/pedidos/editar/<int:pedido_id>/', views.pedido_editar, name='pedido_editar'),
     path('painel/pedidos/excluir/<int:pedido_id>/', views.pedido_excluir, name='pedido_excluir'),
     path('painel/pedidos/imprimir/<int:pedido_id>/', views.pedido_imprimir, name='pedido_imprimir'),
+    path('painel/configurar-precos/', views.configurar_precos, name='configurar_precos',
+),
     
 ]
 

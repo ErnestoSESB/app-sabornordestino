@@ -5,15 +5,308 @@ import json
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, Client
+from django.core.cache import cache
+from django.http import HttpResponse
+from django.test import TestCase, Client, RequestFactory, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from .calculadora_preco import calcular_preco_pizza
+from .middleware import RateLimitMiddleware
 from .models import Bebida, ItemPedido, Pedido, Pizza, TaxaEntrega
 
 
-class CalculadoraPrecoTests(TestCase):
+class RateLimitIsolatedTestCase(TestCase):
+	def setUp(self):
+		cache.clear()
+		super().setUp()
+
+	def tearDown(self):
+		cache.clear()
+		super().tearDown()
+
+
+class RateLimitMiddlewareTests(RateLimitIsolatedTestCase):
+	@override_settings(RATE_LIMIT={'WINDOW': 60, 'REQUESTS': 150})
+	def test_allows_limit_requests_then_returns_too_many_requests(self):
+		middleware = RateLimitMiddleware(lambda request: HttpResponse(status=200))
+		request_factory = RequestFactory()
+
+		for _ in range(150):
+			response = middleware(request_factory.get('/', REMOTE_ADDR='203.0.113.1'))
+			self.assertEqual(response.status_code, 200)
+
+		response = middleware(request_factory.get('/', REMOTE_ADDR='203.0.113.1'))
+		self.assertEqual(response.status_code, 429)
+
+	@override_settings(RATE_LIMIT={'WINDOW': 60, 'REQUESTS': 1})
+	def test_static_and_media_requests_do_not_consume_the_limit(self):
+		middleware = RateLimitMiddleware(lambda request: HttpResponse(status=200))
+		request_factory = RequestFactory()
+
+		for path in ('/static/pizzaria/cardapio.css', '/media/pizzas/image.png'):
+			response = middleware(request_factory.get(path, REMOTE_ADDR='203.0.113.2'))
+			self.assertEqual(response.status_code, 200)
+
+		response = middleware(request_factory.get('/', REMOTE_ADDR='203.0.113.2'))
+		self.assertEqual(response.status_code, 200)
+		response = middleware(request_factory.get('/', REMOTE_ADDR='203.0.113.2'))
+		self.assertEqual(response.status_code, 429)
+
+
+class PainelPedidosPollingTests(RateLimitIsolatedTestCase):
+	def setUp(self):
+		super().setUp()
+		get_user_model().objects.create_user(username='admin_poll', password='123456')
+
+	def test_historico_lista_parcial_exige_login_e_retorna_so_cards(self):
+		self.assertEqual(self.client.get(reverse('historico_pedidos_lista')).status_code, 302)
+		antigo = Pedido.objects.create(cliente='Historico Antigo', total='39.00')
+		Pedido.objects.create(cliente='Historico Novo', total='39.00')
+		Pedido.objects.filter(pk=antigo.pk).update(criado_em=timezone.now() - timedelta(minutes=30))
+		self.client.login(username='admin_poll', password='123456')
+
+		response = self.client.get(reverse('historico_pedidos_lista'))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertNotContains(response, '<html')
+		conteudo = response.content.decode()
+		self.assertLess(conteudo.index('Historico Novo'), conteudo.index('Historico Antigo'))
+
+	def test_historico_configura_polling_com_filtro(self):
+		self.client.login(username='admin_poll', password='123456')
+		response = self.client.get(reverse('historico_pedidos') + '?data=2026-01-01')
+		self.assertContains(response, 'hx-trigger="every 5s')
+		self.assertContains(response, reverse('historico_pedidos_lista') + '?data=2026-01-01')
+
+	def test_lista_parcial_exige_login(self):
+		response = self.client.get(reverse('painel_pedidos_lista'))
+		self.assertEqual(response.status_code, 302)
+
+	def test_lista_parcial_retorna_so_os_cards_com_mais_recentes_primeiro(self):
+		antigo = Pedido.objects.create(cliente='Cliente Antigo', total='39.00')
+		novo = Pedido.objects.create(cliente='Cliente Novo', total='39.00')
+		Pedido.objects.filter(pk=antigo.pk).update(criado_em=timezone.now() - timedelta(minutes=30))
+		self.client.login(username='admin_poll', password='123456')
+
+		response = self.client.get(reverse('painel_pedidos_lista') + '?filtro=todos')
+
+		self.assertEqual(response.status_code, 200)
+		self.assertNotContains(response, '<html')
+		conteudo = response.content.decode()
+		self.assertLess(conteudo.index('Cliente Novo'), conteudo.index('Cliente Antigo'))
+
+	def test_pagina_principal_configura_polling_htmx(self):
+		self.client.login(username='admin_poll', password='123456')
+		response = self.client.get(reverse('painel_pedidos') + '?filtro=todos')
+		self.assertContains(response, 'hx-trigger="every 5s')
+		self.assertContains(response, reverse('painel_pedidos_lista') + '?filtro=todos')
+
+	@override_settings(RATE_LIMIT={'WINDOW': 60, 'REQUESTS': 1})
+	def test_polling_nao_consome_o_rate_limit(self):
+		self.client.login(username='admin_poll', password='123456')
+		for _ in range(5):
+			self.assertEqual(self.client.get(reverse('painel_pedidos_lista')).status_code, 200)
+
+
+class RateLimitUsuariosLogadosTests(RateLimitIsolatedTestCase):
+	@override_settings(RATE_LIMIT={'WINDOW': 60, 'REQUESTS': 3})
+	def test_admin_e_garcom_logados_nao_sao_limitados(self):
+		User = get_user_model()
+		User.objects.create_user(username='admin_rl', password='123456')
+		garcom = User.objects.create_user(username='garcom_rl', password='123456')
+		garcom.groups.create(name='Garçons')
+
+		for username in ('admin_rl', 'garcom_rl'):
+			client = Client()
+			client.login(username=username, password='123456')
+			for _ in range(10):
+				self.assertNotEqual(client.get(reverse('painel_pedidos')).status_code, 429)
+
+	@override_settings(RATE_LIMIT={'WINDOW': 60, 'REQUESTS': 3})
+	def test_visitante_anonimo_continua_limitado(self):
+		codigos = [Client().get(reverse('cardapio')).status_code for _ in range(5)]
+		self.assertEqual(codigos, [200, 200, 200, 429, 429])
+
+
+class PedidoEdicaoTests(RateLimitIsolatedTestCase):
+	def setUp(self):
+		super().setUp()
+		User = get_user_model()
+		self.admin = User.objects.create_user(username='admin_edit', password='123456')
+		self.motoqueiro = User.objects.create_user(username='moto_edit', password='123456')
+		self.garcom = User.objects.create_user(username='garcom_edit', password='123456')
+		self.garcom.groups.create(name='Garçons')
+		self.taxa_a = TaxaEntrega.objects.create(nome='Bairro A', taxa='6.00', ativo=True)
+		self.taxa_b = TaxaEntrega.objects.create(nome='Bairro B', taxa='8.00', ativo=True)
+		self.pizza = Pizza.objects.create(nome='Calabresa Edit', ingredientes='Calabresa', disponivel=True)
+		self.coca = Bebida.objects.create(nome='Coca Edit', preco='8.00', disponivel=True)
+		self.pedido = Pedido.objects.create(
+			usuario=self.garcom, cliente='Cliente Original', telefone='84999990000',
+			endereco='Rua A', forma_pagamento='PIX', local_entrega=self.taxa_a,
+			taxa_entrega='6.00', subtotal='47.00', total='53.00',
+			status='Em preparo', motoqueiro=self.motoqueiro, numero_do_dia=7,
+		)
+		self.item_pizza = ItemPedido.objects.create(
+			pedido=self.pedido, item_tipo='pizza', pizza=self.pizza, quantidade=1, preco_unitario='39.00')
+		self.item_bebida = ItemPedido.objects.create(
+			pedido=self.pedido, item_tipo='bebida', bebida=self.coca, quantidade=1, preco_unitario='8.00')
+
+	def _dados(self, **extra):
+		"""Formulário completo (admin): os itens são refeitos a partir dele."""
+		dados = {
+			'cliente': 'Cliente Editado', 'telefone': '84988887777', 'endereco': 'Rua B, 10',
+			'local_entrega': str(self.taxa_b.id), 'forma_pagamento': 'Dinheiro', 'troco': '100,00',
+			'observacao': 'Sem cebola',
+			'sabor_1[]': [str(self.pizza.id)], 'num_sabores[]': ['1'], 'tamanho[]': ['G'],
+			'quantidade[]': ['2'], 'observacao_item[]': ['Bem assada'],
+			'bebida_id[]': [str(self.coca.id)], 'bebida_quantidade[]': ['1'],
+		}
+		dados.update(extra)
+		return dados
+
+	def test_admin_ve_formulario_completo_preenchido(self):
+		self.client.login(username='admin_edit', password='123456')
+		response = self.client.get(reverse('pedido_editar', args=[self.pedido.id]))
+		self.assertTemplateUsed(response, 'pizzaria/pedido_form.html')
+		self.assertContains(response, 'value="Cliente Original"')
+		self.assertContains(response, 'value="84999990000"')
+		self.assertContains(response, 'Rua A</textarea>')
+		self.assertContains(response, 'edicao-itens')
+		self.assertEqual(response.context['edicao_itens']['pizzas'][0]['sabores'], [self.pizza.id])
+		self.assertEqual(response.context['edicao_itens']['bebidas'][0]['bebida'], self.coca.id)
+
+	def test_admin_troca_sabor_tamanho_e_borda(self):
+		outra = Pizza.objects.create(nome='Frango Edit', ingredientes='Frango', disponivel=True)
+		self.client.login(username='admin_edit', password='123456')
+		self.client.post(reverse('pedido_editar', args=[self.pedido.id]), self._dados(**{
+			'sabor_1[]': [str(outra.id)], 'tamanho[]': ['P'], 'borda_tipo[]': ['cheddar'],
+			'quantidade[]': ['1'], 'bebida_id[]': [], 'bebida_quantidade[]': []}))
+		self.pedido.refresh_from_db()
+		item = self.pedido.itens.get()
+		self.assertEqual(item.pizza, outra)
+		self.assertEqual(item.tamanho, 'P')
+		self.assertEqual(item.borda_tipo, 'cheddar')
+		self.assertEqual(self.pedido.status, 'Em preparo')
+
+	def test_edicao_atualiza_dados_itens_e_total_sem_alterar_o_andamento(self):
+		self.client.login(username='admin_edit', password='123456')
+		criado_em, numero_do_dia = self.pedido.criado_em, self.pedido.numero_do_dia
+
+		response = self.client.post(reverse('pedido_editar', args=[self.pedido.id]), self._dados())
+
+		self.assertRedirects(response, reverse('painel_pedidos'))
+		self.pedido.refresh_from_db()
+		self.assertEqual(self.pedido.cliente, 'Cliente Editado')
+		self.assertEqual(self.pedido.local_entrega, self.taxa_b)
+		self.assertEqual(self.pedido.taxa_entrega, Decimal('8.00'))
+		self.assertEqual(self.pedido.subtotal, Decimal('86.00'))
+		self.assertEqual(self.pedido.total, Decimal('94.00'))
+		self.assertEqual(self.pedido.troco, '100,00')
+		self.assertEqual(self.pedido.status, 'Em preparo')
+		self.assertEqual(self.pedido.motoqueiro, self.motoqueiro)
+		self.assertEqual(self.pedido.usuario, self.garcom)
+		self.assertEqual(self.pedido.numero_do_dia, numero_do_dia)
+		self.assertEqual(self.pedido.criado_em, criado_em)
+		self.assertIsNone(self.pedido.reaberto_em)
+		item = self.pedido.itens.get(item_tipo='pizza')
+		self.assertEqual(item.quantidade, 2)
+		self.assertEqual(item.observacao, 'Bem assada')
+
+	def test_status_enviado_no_post_e_ignorado(self):
+		self.client.login(username='admin_edit', password='123456')
+		self.client.post(reverse('pedido_editar', args=[self.pedido.id]), self._dados(status='Pago', motoqueiro_id=''))
+		self.pedido.refresh_from_db()
+		self.assertEqual(self.pedido.status, 'Em preparo')
+		self.assertEqual(self.pedido.motoqueiro, self.motoqueiro)
+		self.assertIsNone(self.pedido.fechado_em)
+
+	def test_local_inalterado_mantem_taxa_original_mesmo_se_taxa_mudou(self):
+		self.client.login(username='admin_edit', password='123456')
+		TaxaEntrega.objects.filter(pk=self.taxa_a.pk).update(taxa='20.00')
+		self.client.post(
+			reverse('pedido_editar', args=[self.pedido.id]),
+			self._dados(local_entrega=str(self.taxa_a.id)),
+		)
+		self.pedido.refresh_from_db()
+		self.assertEqual(self.pedido.taxa_entrega, Decimal('6.00'))
+
+	def test_remover_itens_e_nao_deixar_pedido_vazio(self):
+		self.client.login(username='admin_edit', password='123456')
+		url = reverse('pedido_editar', args=[self.pedido.id])
+
+		vazio = self.client.post(url, self._dados(**{
+			'sabor_1[]': [], 'bebida_id[]': [], 'bebida_quantidade[]': []}))
+		self.assertRedirects(vazio, url)
+		self.assertEqual(self.pedido.itens.count(), 2)
+
+		self.client.post(url, self._dados(**{
+			'sabor_1[]': [], 'bebida_quantidade[]': ['3']}))
+		self.pedido.refresh_from_db()
+		self.assertFalse(self.pedido.itens.filter(item_tipo='pizza').exists())
+		self.assertEqual(self.pedido.itens.get().quantidade, 3)
+		self.assertEqual(self.pedido.subtotal, Decimal('24.00'))
+
+	def test_erro_de_validacao_nao_grava_nada(self):
+		self.client.login(username='admin_edit', password='123456')
+		self.client.post(
+			reverse('pedido_editar', args=[self.pedido.id]),
+			self._dados(forma_pagamento='Fiado'),
+		)
+		self.pedido.refresh_from_db()
+		self.assertEqual(self.pedido.cliente, 'Cliente Original')
+		self.assertEqual(self.pedido.itens.count(), 2)
+
+	def test_pedido_pago_nao_pode_ser_editado(self):
+		Pedido.objects.filter(pk=self.pedido.pk).update(status='Pago')
+		self.client.login(username='admin_edit', password='123456')
+		url = reverse('pedido_editar', args=[self.pedido.id])
+		self.assertRedirects(self.client.get(url), reverse('painel_pedidos'))
+		self.client.post(url, self._dados())
+		self.pedido.refresh_from_db()
+		self.assertEqual(self.pedido.cliente, 'Cliente Original')
+
+	def test_garcom_edita_igual_ao_admin_mas_so_o_proprio_pedido(self):
+		outro = Pedido.objects.create(cliente='Pedido Alheio', total='10.00', usuario=self.admin)
+		self.client.login(username='garcom_edit', password='123456')
+		self.assertEqual(self.client.get(reverse('pedido_editar', args=[outro.id])).status_code, 404)
+
+		url = reverse('pedido_editar', args=[self.pedido.id])
+		self.assertTemplateUsed(self.client.get(url), 'pizzaria/pedido_form.html')
+		self.client.post(url, self._dados())
+		self.pedido.refresh_from_db()
+		self.assertEqual(self.pedido.cliente, 'Cliente Editado')
+		self.assertEqual(self.pedido.telefone, '84988887777')
+		self.assertEqual(self.pedido.local_entrega, self.taxa_b)
+		self.assertEqual(self.pedido.forma_pagamento, 'Dinheiro')
+		self.assertEqual(self.pedido.total, Decimal('94.00'))
+		self.assertEqual(self.pedido.status, 'Em preparo')
+		self.assertEqual(self.pedido.usuario, self.garcom)
+
+	def test_garcom_so_edita_pedido_pago_depois_de_reaberto(self):
+		Pedido.objects.filter(pk=self.pedido.pk).update(status='Pago')
+		self.client.login(username='garcom_edit', password='123456')
+		url = reverse('pedido_editar', args=[self.pedido.id])
+		self.assertRedirects(self.client.get(url), reverse('painel_pedidos'))
+		self.client.post(url, self._dados())
+		self.pedido.refresh_from_db()
+		self.assertEqual(self.pedido.cliente, 'Cliente Original')
+
+		self.client.post(reverse('pedido_reabrir', args=[self.pedido.id]), {'status': 'Em preparo'})
+		self.assertEqual(self.client.get(url).status_code, 200)
+		self.client.post(url, self._dados())
+		self.pedido.refresh_from_db()
+		self.assertEqual(self.pedido.cliente, 'Cliente Editado')
+		self.assertEqual(self.pedido.status, 'Em preparo')
+
+	def test_edicao_exige_login_e_lista_mostra_botao_editar(self):
+		url = reverse('pedido_editar', args=[self.pedido.id])
+		self.assertEqual(self.client.get(url).status_code, 302)
+		self.client.login(username='admin_edit', password='123456')
+		self.assertContains(self.client.get(reverse('painel_pedidos_lista') + '?filtro=todos'), url)
+
+
+class CalculadoraPrecoTests(RateLimitIsolatedTestCase):
 	def test_calcula_preco_com_sabor_especial_metade_e_adicionais(self):
 		preco = calcular_preco_pizza(
 			tamanho='G',
@@ -27,8 +320,9 @@ class CalculadoraPrecoTests(TestCase):
 		self.assertEqual(preco, Decimal('60.00'))
 
 
-class CheckoutCarrinhoTests(TestCase):
+class CheckoutCarrinhoTests(RateLimitIsolatedTestCase):
 	def setUp(self):
+		super().setUp()
 		self.pizza = Pizza.objects.create(
 			nome='Calabresa Teste',
 			ingredientes='Calabresa, cebola e azeitona',
@@ -171,8 +465,9 @@ class CheckoutCarrinhoTests(TestCase):
 		self.assertContains(pagina_b, 'Pedido Vazio')
 
 
-class PainelBebidasTests(TestCase):
+class PainelBebidasTests(RateLimitIsolatedTestCase):
 	def setUp(self):
+		super().setUp()
 		self.user = get_user_model().objects.create_user(username='admin', password='123456')
 
 	def test_bebida_pode_ter_imagem(self):
@@ -274,6 +569,30 @@ class PainelBebidasTests(TestCase):
 		self.assertEqual(pedido.troco, '50,00')
 		self.assertEqual(pedido.subtotal, Decimal('39.00'))
 		self.assertEqual(pedido.total, Decimal('44.00'))
+
+	def test_registro_manual_nao_exibe_telefone_e_salva_sem_telefone(self):
+		pizza = Pizza.objects.create(nome='Calabresa Sem Telefone', ingredientes='Calabresa', disponivel=True)
+		self.client.login(username='admin', password='123456')
+
+		formulario = self.client.get(reverse('pedido_adicionar'))
+		self.assertNotContains(formulario, 'id="telefone"')
+
+		response = self.client.post(
+			reverse('pedido_adicionar'),
+			data={
+				'cliente': 'Cliente Sem Telefone',
+				'local_entrega': 'local',
+				'forma_pagamento': 'PIX',
+				'sabor_1[]': [str(pizza.id)],
+				'num_sabores[]': ['1'],
+				'tamanho[]': ['G'],
+				'quantidade[]': ['1'],
+			},
+		)
+
+		pedido = Pedido.objects.get(cliente='Cliente Sem Telefone')
+		self.assertRedirects(response, reverse('painel_pedidos'))
+		self.assertEqual(pedido.telefone, '')
 
 	def test_garcom_registra_pedido_sem_telefone_e_endereco(self):
 		pizza = Pizza.objects.create(nome='Calabresa Garcom', ingredientes='Calabresa', disponivel=True)
@@ -468,7 +787,7 @@ class PainelBebidasTests(TestCase):
 		self.assertContains(response, 'Gerenciar Bebidas')
 
 
-class ContatoTests(TestCase):
+class ContatoTests(RateLimitIsolatedTestCase):
 	def test_contato_exige_telefone_valido(self):
 		response = self.client.post(
 			reverse('contato'),

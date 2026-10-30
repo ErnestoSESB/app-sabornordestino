@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Meu Pedido - Brasa & Brasa</title>
+    <title>Meu Pedido</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -19,6 +19,7 @@
 
     <link rel="stylesheet" href="{% static 'pizzaria/index.css' %}" />
     <link rel="stylesheet" href="{% static 'pizzaria/carrinho.css' %}" />
+    <link rel="stylesheet" href="{% static 'pizzaria/gerenciar.css' %}?v=12">
   </head>
   <body>
     <header class="navbar navbar-solid">
@@ -63,6 +64,7 @@
 
     <section class="checkout-section">
       <div class="container checkout-container">
+
         {% if pedidos_em_andamento and not itens %}
         {% for pedido_em_andamento in pedidos_em_andamento %}
         <div class="checkout-card tracking-card">
@@ -82,11 +84,28 @@
               <div>
                 <strong>{{ item.quantidade }}x {% if item.item_tipo == 'bebida' %}{{ item.bebida.nome }}{% elif item.sabores_nomes %}Pizza: {{ item.sabores_nomes|join:', ' }}{% else %}{{ item.pizza.nome }}{% endif %}</strong>
                 {% if item.item_tipo == 'pizza' %}
-                <span>{% if item.tamanho == 'P' %}Pequena{% elif item.tamanho == 'M' %}Média{% else %}Grande{% endif %}</span>
-                {% if item.borda_chocolate or item.catupiry_cima != 'nao' or item.catupiry_borda %}
-                <span>Adicionais:{% if item.borda_chocolate %} Borda de Chocolate{% endif %}{% if item.catupiry_cima == 'inteira' %} Catupiry por Cima (Inteira){% endif %}{% if item.catupiry_cima == 'metade' %} Catupiry por Cima (Metade){% endif %}{% if item.catupiry_borda %} Catupiry na Borda{% endif %}</span>
+                <span>
+                  {% if item.tamanho == 'P' %}Pequena
+                  {% elif item.tamanho == 'M' %}Média
+                  {% else %}Grande{% endif %}
+                </span>
+                {% if item.borda_tipo != 'catupiry' or item.catupiry_cima != 'nao' %}
+                <span>Adicionais:
+                  {% if item.borda_tipo == 'chocolate' %} Borda de Chocolate
+                  {% elif item.borda_tipo == 'catupiry_original' %} Borda de Catupiry Original
+                  {% elif item.borda_tipo == 'cheddar' %} Borda de Cheddar
+                  {% elif item.borda_tipo == 'sem_borda' %} Sem borda{% endif %}
+                  {% if item.catupiry_cima == 'inteira' %} Catupiry por Cima (Inteira){% endif %}
+                  {% if item.catupiry_cima == 'metade' %} Catupiry por Cima (Metade){% endif %}</span>
                 {% endif %}
                 {% endif %}
+                {% if item.observacao %}
+                  <div class="item-observation">
+                    <i class="fa-regular fa-comment text-primary" aria-hidden="true"></i>
+                    <strong>Obs:</strong> {{ item.observacao|linebreaksbr }}
+                  </div>
+                {% endif %}
+                
               </div>
               <strong>R$ {{ item.subtotal }}</strong>
             </div>
@@ -97,8 +116,10 @@
             <div><span>Receber em: </span><strong>{% if pedido_em_andamento.local_entrega %}{{ pedido_em_andamento.local_entrega.nome }}{% else %}Retirada no local{% endif %}</strong></div>
             <div><span>Endereço: </span><strong>{% if pedido_em_andamento.endereco %}{{ pedido_em_andamento.endereco }}{% else %}Retirada no local{% endif %}</strong></div>
             <div><span>Pagamento: </span><strong>{{ pedido_em_andamento.forma_pagamento }}</strong></div>
-            {% if pedido_em_andamento.observacao %}<div><span>Observações: </span><strong>{{ pedido_em_andamento.observacao }}</strong></div>{% endif %}
             <div><span>Horário do pedido: </span><strong>{{ pedido_em_andamento.criado_em|date:"H:i" }}</strong></div>
+            {% if pedido_em_andamento.observacao %}
+              <div><span>Observações: </span><strong>{{ pedido_em_andamento.observacao|linebreaksbr }}</strong></div>
+            {% endif %}
           </div>
 
           <div class="tracking-total">
@@ -164,56 +185,59 @@
             </ul>
           {% endif %}
 
-          {% if item.tipo != 'bebida' and item.tem_adicionais %}
-          <div class="item-addons">
-            <p><strong>Adicionais:</strong></p>
-            <ul>
-              {% if item.borda_chocolate %}
-              <li>
-                <span>Borda de Chocolate</span>
-                <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
-                  {% csrf_token %}
-                  <input type="hidden" name="adicional" value="borda_chocolate" />
-                  <button type="submit" class="remove-addon-btn" aria-label="Remover borda de chocolate" title="Remover adicional">
-                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
-                  </button>
-                </form>
-              </li>
-              {% endif %} {% if item.catupiry_cima == 'inteira' %}
-              <li>
-                <span>Catupiry por Cima (Inteira)</span>
-                <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
-                  {% csrf_token %}
-                  <input type="hidden" name="adicional" value="catupiry_cima" />
-                  <button type="submit" class="remove-addon-btn" aria-label="Remover catupiry por cima" title="Remover adicional">
-                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
-                  </button>
-                </form>
-              </li>
-              {% endif %} {% if item.catupiry_cima == 'metade' %}
-              <li>
-                <span>Catupiry por Cima (Metade)</span>
-                <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
-                  {% csrf_token %}
-                  <input type="hidden" name="adicional" value="catupiry_cima" />
-                  <button type="submit" class="remove-addon-btn" aria-label="Remover catupiry por cima" title="Remover adicional">
-                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
-                  </button>
-                </form>
-              </li>
-              {% endif %} {% if item.catupiry_borda %}
-              <li>
-                <span>Catupiry na Borda</span>
-                <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
-                  {% csrf_token %}
-                  <input type="hidden" name="adicional" value="catupiry_borda" />
-                  <button type="submit" class="remove-addon-btn" aria-label="Remover catupiry na borda" title="Remover adicional">
-                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
-                  </button>
-                </form>
-              </li>
-              {% endif %}
-            </ul>
+          {# ===== ADICIONAIS: borda escolhida + catupiry por cima ===== #}
+          {% if item.tipo != 'bebida' %}
+            {% if item.tem_adicionais %}
+            <div class="item-addons">
+              <p><strong>Adicionais:</strong></p>
+              <ul>
+                {% if item.borda_tipo != 'catupiry' %}
+                <li>
+                  <span>{{ item.borda_label }}{% if item.borda_valor > 0 %} (+R$ {{ item.borda_valor_fmt }}){% endif %}</span>
+                  <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="adicional" value="borda" />
+                    <button type="submit" class="remove-addon-btn" aria-label="Remover borda" title="Remover borda">
+                      <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                    </button>
+                  </form>
+                </li>
+                {% endif %}
+
+                {% if item.catupiry_cima == 'inteira' %}
+                <li>
+                  <span>Catupiry por Cima (Inteira)</span>
+                  <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="adicional" value="catupiry_cima" />
+                    <button type="submit" class="remove-addon-btn" aria-label="Remover catupiry por cima" title="Remover adicional">
+                      <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                    </button>
+                  </form>
+                </li>
+                {% endif %}
+
+                {% if item.catupiry_cima == 'metade' %}
+                <li>
+                  <span>Catupiry por Cima (Metade)</span>
+                  <form method="post" action="{% url 'carrinho_remover' item.item_id %}" class="remove-addon-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="adicional" value="catupiry_cima" />
+                    <button type="submit" class="remove-addon-btn" aria-label="Remover catupiry por cima" title="Remover adicional">
+                      <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                    </button>
+                  </form>
+                </li>
+                {% endif %}
+              </ul>
+            </div>
+            {% endif %}
+          {% endif %}
+
+          {% if item.observacao %}
+          <div class="item-observation">
+            <i class="fa-regular fa-comment text-primary" aria-hidden="true"></i>
+            <strong>Obs:</strong> {{ item.observacao|linebreaksbr }}
           </div>
           {% endif %}
 
@@ -231,8 +255,10 @@
               Remover
             </button>
           </form>
-        </div>
-        {% endfor %} {% endif %}
+        </div> 
+        {% endfor %}
+        {% endif %}
+
         {% if itens %}
           <div class="checkout-card order-summary">
               <h3 class="card-title">Resumo do Pedido</h3>
@@ -255,91 +281,61 @@
                               </span>
                               <span>R$ {{ item.total }}</span>
                           </div>
-                          {% if item.borda_chocolate %}
+
+                          {% if item.borda_tipo != 'catupiry' %}
                               <div class="summary-line summary-addon-line">
-                                  <span>Borda de Chocolate</span>
-                                  <span>
-                                      R$
-                                      {% if item.tamanho == 'P' %}
-                                          6,00
-                                      {% elif item.tamanho == 'M' %}
-                                          8,00
-                                      {% else %}
-                                          10,00
-                                      {% endif %}
-                                  </span>
+                                  <span>{{ item.borda_label }}</span>
+                                  <span>{% if item.borda_valor > 0 %}R$ {{ item.borda_valor_fmt }}{% else %}Grátis{% endif %}</span>
                               </div>
                           {% endif %}
+
                           {% if item.catupiry_cima == 'metade' %}
                               <div class="summary-line summary-addon-line">
                                   <span>Catupiry por Cima (Metade)</span>
-                                  <span>
-                                      R$
-                                      {% if item.tamanho == 'P' %}
-                                          5,00
-                                      {% elif item.tamanho == 'M' %}
-                                          6,00
-                                      {% else %}
-                                          7,00
-                                      {% endif %}
-                                  </span>
+                                  <span>R$ {{ item.catupiry_cima_valor_fmt }}</span>
                               </div>
                           {% endif %}
+
                           {% if item.catupiry_cima == 'inteira' %}
                               <div class="summary-line summary-addon-line">
                                   <span>Catupiry por Cima (Inteira)</span>
-                                  <span>
-                                      R$
-                                      {% if item.tamanho == 'P' %}
-                                          10,00
-                                      {% elif item.tamanho == 'M' %}
-                                          12,00
-                                      {% else %}
-                                          14,00
-                                      {% endif %}
-                                  </span>
+                                  <span>R$ {{ item.catupiry_cima_valor_fmt }}</span>
                               </div>
                           {% endif %}
-                          {% if item.catupiry_borda %}
-                              <div class="summary-line summary-addon-line">
-                                  <span>Catupiry na Borda</span>
-                                  <span>
-                                      R$
-                                      {% if item.tamanho == 'P' %}
-                                          10,00
-                                      {% elif item.tamanho == 'M' %}
-                                          12,00
-                                      {% else %}
-                                          14,00
-                                      {% endif %}
-                                  </span>
+
+                          {% if item.observacao %}
+                              <div class="summary-line summary-observation-line">
+                                  <span><i class="fa-regular fa-comment text-primary" aria-hidden="true"></i> Obs: {{ item.observacao|linebreaksbr }}</span>
                               </div>
                           {% endif %}
                       {% endif %}
                   {% endfor %}
               </div>
+
+              <div class="summary-line">
+                <span>Subtotal:</span>
+                <span>R$ {{ carrinho.get_total }}</span>
+              </div>
+              <div class="summary-line text-primary">
+                <span>Taxa de Entrega:</span>
+                <span id="taxa-entrega">R$ 0,00</span>
+              </div>
+
+              <hr class="divider" />
+
+              <div class="summary-line total">
+                <span>Total:</span>
+                <span id="total-final">R$ {{ carrinho.get_total }}</span>
+              </div>
           </div>
-          {% else %}
-          <div class="summary-empty">
+        {% else %}
+          {% if not pedidos_em_andamento %}
+          <div class="checkout-card order-summary">
+            <div class="summary-empty">
               Seu pedido ainda está vazio. Adicione uma pizza ou bebida para ver o resumo.
+            </div>
           </div>
-
-          <div class="summary-line">
-            <span>Subtotal:</span>
-            <span>R$ {{ carrinho.get_total }}</span>
-          </div>
-          <div class="summary-line text-primary">
-            <span>Taxa de Entrega:</span>
-            <span id="taxa-entrega">R$ 0,00</span>
-          </div>
-
-          <hr class="divider" />
-
-          <div class="summary-line total">
-            <span>Total:</span>
-            <span id="total-final">R$ {{ carrinho.get_total }}</span>
-          </div>
-        </div>
+          {% endif %}
         {% endif %}
 
         {% if not itens %}
@@ -419,16 +415,6 @@
             </div>
 
             <div class="form-group">
-              <label for="observacoes">Observações (opcional):</label>
-              <textarea
-                id="observacoes"
-                name="observacoes"
-                rows="2"
-                placeholder="Ex: Tirar cebola, borda recheada, sem azeitona..."
-              ></textarea>
-            </div>
-
-            <div class="form-group">
               <label for="pagamento">Forma de Pagamento:</label>
               <div class="select-wrapper">
                 <select
@@ -467,16 +453,7 @@
               class="btn btn-primary btn-block"
               id="btn-finalizar-app"
             >
-              <i class="fa-solid fa-check-circle"></i> Finalizar pedido no app
-            </button>
-
-            <button
-              type="button"
-              class="btn btn-whatsapp btn-block mt-2"
-              id="btn-finalizar"
-              onclick="enviarParaWhatsApp()"
-            >
-              <i class="fa-solid fa-check"></i> Enviar Pedido pelo WhatsApp
+              <i class="fa-solid fa-check-circle"></i> Finalizar Pedido
             </button>
           </form>
         </div>
@@ -579,6 +556,16 @@
       </div>
     </footer>
 
+    <div id="whatsapp-itens" hidden>
+      {% for item in itens %}
+        {% if item.tipo == 'bebida' %}
+          <span class="wa-item">{{ item.quantidade }}x {{ item.bebida.nome }}</span>
+        {% else %}
+          <span class="wa-item">{{ item.quantidade }}x Pizza {{ item.tamanho }} - {{ item.sabores_data.descricao|default:item.pizza.nome }}{% if item.borda_tipo != 'catupiry' %} | {{ item.borda_label }}{% endif %}{% if item.catupiry_cima == 'inteira' %} | Catupiry por cima (inteira){% elif item.catupiry_cima == 'metade' %} | Catupiry por cima (metade){% endif %}{% if item.observacao %} | Obs: {{ item.observacao }}{% endif %}</span>
+        {% endif %}
+      {% endfor %}
+    </div>
+
     <script>
       function enviarParaWhatsApp() {
         const form = document.getElementById('form-pedido');
@@ -592,7 +579,8 @@
         const localSelect = document.getElementById('local_entrega');
         const localNome = localSelect.options[localSelect.selectedIndex].text;
         const endereco = document.getElementById('endereco').value.trim();
-        const observacoes = document.getElementById('observacoes').value.trim();
+        const campoObs = document.getElementById('observacoes');
+        const observacoes = campoObs ? campoObs.value.trim() : '';
         const pagamento = document.getElementById('pagamento').value;
         const troco = document.getElementById('troco').value.trim();
         const totalTexto = document.getElementById('total-final').textContent;
@@ -600,7 +588,16 @@
         let texto = `*🍕 NOVO PEDIDO - SABOR NORDESTINO*\n\n`;
         texto += `*Cliente:* ${nome}\n`;
         texto += `*Local de Entrega:* ${localNome}\n`;
-        texto += `*Endereço:* ${endereco}\n`;
+        texto += `*Endereço:* ${endereco}\n\n`;
+
+        const itensTexto = Array.from(document.querySelectorAll('#whatsapp-itens .wa-item'))
+            .map(item => item.textContent.replace(/\s+/g, ' ').trim())
+            .filter(Boolean)
+            .join('\n');
+
+        if (itensTexto) {
+            texto += `*Itens:*\n${itensTexto}\n\n`;
+        }
 
         if (observacoes) {
             texto += `*Observações:* ${observacoes}\n`;

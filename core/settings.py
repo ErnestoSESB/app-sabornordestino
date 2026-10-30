@@ -33,7 +33,7 @@ if not SECRET_KEY:
     else:
         raise ValueError('SECRET_KEY environment variable is required in production')
 
-ALLOWED_HOSTS = ['pizzaria-sabor-nordestino-production.up.railway.app', 'sabornordestino.online', 'www.sabornordestino.online', 'localhost', '127.0.0.1', 'sabornordestino.seatechcorp.com.br']
+ALLOWED_HOSTS = ['pizzaria-sabor-nordestino-production.up.railway.app', 'intercorporate-aniyah-scholarless.ngrok-free.dev', 'sabornordestino.online', 'www.sabornordestino.online', 'localhost', '127.0.0.1', 'sabornordestino.seatechcorp.com.br']
 
 # CSRF e segurança
 CSRF_TRUSTED_ORIGINS = [
@@ -152,7 +152,7 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = BASE_DIR / 'pizzaria' / 'media'
 
 # WhiteNoise para servir arquivos estáticos em produção
 WHITENOISE_USE_FINDERS = True
@@ -174,4 +174,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
-RATE_LIMIT = {"WINDOW": 60, "REQUESTS": 100}  # ajustar conforme tráfego
+RATE_LIMIT = {"WINDOW": 60, "REQUESTS": 150}

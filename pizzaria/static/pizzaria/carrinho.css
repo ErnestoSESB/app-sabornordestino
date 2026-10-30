@@ -142,6 +142,21 @@
   border-color: rgba(255, 87, 34, 0.28);
 }
 
+.item-observation {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 3px solid #ff5722;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  color: #e0e0e0;
+  overflow-wrap: anywhere;
+}
+
+.item-observation i {
+  margin-right: 6px;
+}
+
 .tracking-header,
 .tracking-item,
 .tracking-details > div,
@@ -478,4 +493,22 @@
   .checkout-hero-visual img {
     max-width: 280px;
   }
+}
+
+/* Observação do item exibida no resumo do pedido */
+.summary-observation-line {
+    display: block;
+    margin-left: 14px;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid var(--primary);
+    border-radius: 8px;
+    white-space: pre-line;
+}
+
+.summary-observation-line i {
+    margin-right: 6px;
 }

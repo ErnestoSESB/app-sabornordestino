@@ -31,7 +31,7 @@ class PedidoAdmin(admin.ModelAdmin):
 	
 @admin.register(ItemPedido)
 class ItemPedidoAdmin(admin.ModelAdmin):
-	list_display = ('pedido', 'item_tipo', 'pizza', 'bebida', 'tamanho', 'quantidade', 'preco_unitario', 'subtotal')
+	list_display = ('pedido', 'item_tipo', 'pizza', 'bebida', 'tamanho', 'borda_tipo', 'quantidade', 'preco_unitario', 'subtotal')
 	list_filter = ('item_tipo', 'tamanho')
 	search_fields = ('pedido__cliente', 'pizza__nome', 'bebida__nome')
 

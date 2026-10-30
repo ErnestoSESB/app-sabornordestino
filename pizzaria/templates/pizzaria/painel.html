@@ -27,12 +27,37 @@
 
             <section class="dashboard-section">
                 <h2 class="section-title">Faturamento</h2>
+                <form method="get" class="date-filter" aria-label="Filtrar faturamento por data">
+                    <div class="date-filter-fields">
+                        <label for="data_inicio">De
+                            <input type="date" id="data_inicio" name="data_inicio" value="{{ data_inicio_filtro }}">
+                        </label>
+                        <label for="data_fim">Até
+                            <input type="date" id="data_fim" name="data_fim" value="{{ data_fim_filtro }}">
+                        </label>
+                    </div>
+                    <div class="date-filter-actions">
+                        <button type="submit" class="date-filter-submit"><i class="fa-solid fa-filter"></i> Filtrar</button>
+                        {% if filtro_data_ativo %}<a href="{% url 'painel' %}" class="date-filter-clear">Limpar</a>{% endif %}
+                    </div>
+                </form>
+                {% if messages %}
+                    {% for message in messages %}
+                        <p class="date-filter-error">{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
                 <div class="metrics-grid grid-4">
                     <div class="metric-card accent-green"><div class="card-icon"><i class="fa-solid fa-money-bill-wave"></i></div><div class="card-data"><h3>R$ {{ faturamento_hoje|floatformat:2 }}</h3><p>Faturamento Hoje</p></div></div>
                     <div class="metric-card accent-blue"><div class="card-icon"><i class="fa-solid fa-calendar-week"></i></div><div class="card-data"><h3>R$ {{ faturamento_semana|floatformat:2 }}</h3><p>Últimos 7 Dias</p></div></div>
                     <div class="metric-card accent-purple"><div class="card-icon"><i class="fa-solid fa-calendar-days"></i></div><div class="card-data"><h3>R$ {{ faturamento_mes|floatformat:2 }}</h3><p>Últimos 30 Dias</p></div></div>
                     <div class="metric-card accent-green"><div class="card-icon"><i class="fa-solid fa-chart-line"></i></div><div class="card-data"><h3>R$ {{ faturamento_bruto|floatformat:2 }}</h3><p>Faturamento Bruto</p></div></div>
                 </div>
+                {% if filtro_data_ativo %}
+                <div class="filtered-period-summary">
+                    <div><strong>R$ {{ faturamento_periodo|floatformat:2 }}</strong><span>Faturamento no período selecionado</span></div>
+                    <div><strong>{{ pedidos_periodo }}</strong><span>Pedidos no período</span></div>
+                </div>
+                {% endif %}
             </section>
 
             <section class="dashboard-section sales-chart-section">
@@ -117,7 +142,7 @@
         });
 
         function atualizarGrafico(periodo) {
-            const dados = periodo === 'bruto' ? vendas : vendas.slice(-Number(periodo));
+            const dados = periodo === 'bruto' ? vendas : vendas.slice(-periodo);
             salesChart.data.labels = dados.map(item => item.data);
             salesChart.data.datasets[0].data = dados.map(item => item.valor);
             salesChart.update();

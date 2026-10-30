@@ -1,6 +1,66 @@
 from decimal import Decimal
-from .models import Pizza, Bebida
+from .models import Pizza, Bebida, ConfiguracaoPreco
+from .calculadora_preco import valor_por_tamanho
 import json
+
+# Borda padrão da casa (já inclusa no valor da pizza).
+BORDA_PADRAO = 'catupiry'
+
+BORDAS_LABELS = {
+    'catupiry': 'Borda de Catupiry (padrão)',
+    'cheddar': 'Borda de Cheddar',
+    'sem_borda': 'Sem borda',
+    'catupiry_original': 'Borda de Catupiry Original',
+    'chocolate': 'Borda de Chocolate',
+}
+
+BORDAS_PREFIXOS = {
+    'catupiry': 'borda_catupiry',
+    'cheddar': 'borda_cheddar',
+    'catupiry_original': 'borda_catupiry_original',
+    'chocolate': 'borda_chocolate',
+}
+
+
+def rotulo_borda(borda_tipo):
+    return BORDAS_LABELS.get(borda_tipo or BORDA_PADRAO, BORDAS_LABELS[BORDA_PADRAO])
+
+
+def resolver_borda_tipo(item):
+    """Descobre a borda do item, considerando carrinhos antigos sem o campo borda_tipo."""
+    borda_tipo = item.get('borda_tipo')
+    if borda_tipo:
+        return borda_tipo
+    if item.get('borda_chocolate'):
+        return 'chocolate'
+    if item.get('catupiry_borda'):
+        return 'catupiry_original'
+    return BORDA_PADRAO
+
+
+def valor_borda(tamanho, borda_tipo, configuracao=None):
+    prefixo = BORDAS_PREFIXOS.get(borda_tipo)
+    if not prefixo:
+        return Decimal('0.00')
+    if configuracao is None:
+        configuracao = ConfiguracaoPreco.obter()
+    return Decimal(valor_por_tamanho(configuracao, prefixo, tamanho))
+
+
+def valor_catupiry_cima(tamanho, catupiry_cima, configuracao=None):
+    if catupiry_cima not in {'metade', 'inteira'}:
+        return Decimal('0.00')
+    if configuracao is None:
+        configuracao = ConfiguracaoPreco.obter()
+    return Decimal(valor_por_tamanho(configuracao, f'catupiry_cima_{catupiry_cima}', tamanho))
+
+
+def formatar_moeda(valor):
+    try:
+        return f'{Decimal(str(valor)):.2f}'.replace('.', ',')
+    except (TypeError, ValueError, ArithmeticError):
+        return '0,00'
+
 
 class Carrinho:
     def __init__(self, request):
@@ -11,7 +71,7 @@ class Carrinho:
         self.carrinho = carrinho
     
     def adicionar(self, pizza=None, bebida=None, quantidade=1, preco=None, tamanho='G', borda_chocolate=False,
-                  catupiry_cima='nao', catupiry_borda=False, sabores=None, borda_tipo='catupiry'):
+                  catupiry_cima='nao', catupiry_borda=False, sabores=None, borda_tipo='catupiry', observacao=''):
         if bebida is not None:
             bebida_id = str(bebida.id)
             item_id = f"bebida_{bebida_id}"
@@ -29,6 +89,7 @@ class Carrinho:
                     'borda_tipo': 'catupiry',
                     'sabores': None,
                     'nome': bebida.nome,
+                    'observacao': observacao,
                 }
             else:
                 self.carrinho[item_id]['quantidade'] += quantidade
@@ -56,6 +117,7 @@ class Carrinho:
                 'borda_tipo': borda_tipo,
                 'sabores': sabores,
                 'nome': pizza.nome,
+                'observacao': observacao,
             }
         else:
             self.carrinho[item_id]['quantidade'] += quantidade
@@ -68,29 +130,35 @@ class Carrinho:
 
     def remover_adicional(self, item_id, adicional):
         item = self.carrinho.get(item_id)
-        adicionais_validos = {'borda_chocolate', 'catupiry_cima', 'catupiry_borda'}
+        adicionais_validos = {'borda', 'borda_chocolate', 'catupiry_cima', 'catupiry_borda'}
 
         if not item or item.get('tipo', 'pizza') == 'bebida' or adicional not in adicionais_validos:
             return
 
         tamanho = item.get('tamanho', 'G')
-        precos = {
-            'borda_chocolate': {'P': Decimal('4.00'), 'M': Decimal('5.00'), 'G': Decimal('6.00')},
-            'catupiry_borda': {'P': Decimal('8.00'), 'M': Decimal('10.00'), 'G': Decimal('12.00')},
-        }
-        valor = precos.get(adicional, {}).get(tamanho, Decimal('0.00'))
+        configuracao = ConfiguracaoPreco.obter()
 
-        if adicional == 'catupiry_cima':
-            valor = {
-                'inteira': {'P': Decimal('10.00'), 'M': Decimal('12.00'), 'G': Decimal('14.00')},
-                'metade': {'P': Decimal('5.00'), 'M': Decimal('6.00'), 'G': Decimal('7.00')},
-            }.get(item.get('catupiry_cima'), {}).get(tamanho, Decimal('0.00'))
+        # Bordas: qualquer opção volta para "sem borda" e devolve o valor cobrado.
+        if adicional in {'borda', 'borda_chocolate', 'catupiry_borda'}:
+            if adicional == 'borda_chocolate':
+                borda_tipo = 'chocolate'
+            elif adicional == 'catupiry_borda':
+                borda_tipo = 'catupiry_original'
+            else:
+                borda_tipo = resolver_borda_tipo(item)
 
+            valor = valor_borda(tamanho, borda_tipo, configuracao)
+            item['preco'] = str(max(Decimal('0.00'), Decimal(item.get('preco', '0.00')) - valor))
+            item['borda_tipo'] = 'sem_borda'
+            item['borda_chocolate'] = False
+            item['catupiry_borda'] = False
+            self.salvar()
+            return
+
+        # Catupiry original por cima.
+        valor = valor_catupiry_cima(tamanho, item.get('catupiry_cima'), configuracao)
         item['preco'] = str(max(Decimal('0.00'), Decimal(item.get('preco', '0.00')) - valor))
-        if adicional == 'catupiry_cima':
-            item['catupiry_cima'] = 'nao'
-        else:
-            item[adicional] = False
+        item['catupiry_cima'] = 'nao'
         self.salvar()
     
     def atualizar_quantidade(self, item_id, quantidade):

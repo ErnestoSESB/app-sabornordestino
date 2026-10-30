@@ -3,8 +3,6 @@ from django.core.cache import cache
 from django.http import HttpResponse
 from django.conf import settings
 
-RATE_LIMIT = getattr(settings, "RATE_LIMIT", {"WINDOW": 60, "REQUESTS": 100})
-
 def _get_client_ip(request):
     xff = request.META.get("HTTP_X_FORWARDED_FOR")
     if xff:
@@ -14,10 +12,19 @@ def _get_client_ip(request):
 class RateLimitMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
-        self.window = RATE_LIMIT["WINDOW"]
-        self.requests = RATE_LIMIT["REQUESTS"]
+        rate_limit = getattr(settings, "RATE_LIMIT", {"WINDOW": 60, "REQUESTS": 150})
+        self.window = rate_limit["WINDOW"]
+        self.requests = rate_limit["REQUESTS"]
 
     def __call__(self, request):
+        if request.path_info.startswith((settings.STATIC_URL, settings.MEDIA_URL, "/painel/pedidos/lista/")):
+            return self.get_response(request)
+
+        # Admin e garçons logados usam o sistema intensamente; o limite vale só para visitantes anônimos.
+        user = getattr(request, "user", None)
+        if user is not None and user.is_authenticated:
+            return self.get_response(request)
+
         ip = _get_client_ip(request)
         if not ip:
             return self.get_response(request)

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar Novo Pedido - Sabor &amp; Nordestino</title>
+    <title>{% if edicao %}Editar Pedido{% else %}Registrar Novo Pedido{% endif %} - Sabor &amp; Nordestino</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Playfair+Display:ital,wght@0,600;0,700;1,600&amp;display=swap" rel="stylesheet">
@@ -21,23 +21,26 @@
         <main class="admin-content">
             <header class="admin-header">
                 <div>
-                    <h1>Registrar Novo Pedido</h1>
-                    <p>Registre pedidos recebidos pelo WhatsApp.</p>
+                    <h1>{% if edicao %}Editar Pedido #{{ pedido.id|stringformat:"03d" }}{% else %}Registrar Novo Pedido{% endif %}</h1>
+                    <p>{% if edicao %}Altere qualquer dado do pedido. O status e o entregador não são afetados.{% else %}Registre pedidos recebidos pelo WhatsApp.{% endif %}</p>
                 </div>
                 <div><a href="{% url 'painel_pedidos' %}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Voltar</a></div>
             </header>
 
             <div class="form-container-card">
+                {% for message in messages %}
+                <p style="margin: 0 0 12px; font-weight: 600; color: {% if message.tags == 'success' %}#2e7d32{% else %}#d32f2f{% endif %};">{{ message }}</p>
+                {% endfor %}
                 <form method="post" class="admin-form" id="formPedido">
                     {% csrf_token %}
                     <div class="form-group">
                         <label for="cliente">Nome do Cliente:</label>
-                        <input type="text" id="cliente" name="cliente" class="form-control" placeholder="Nome completo" required>
+                        <input type="text" id="cliente" name="cliente" class="form-control" placeholder="Nome completo" value="{{ cliente }}" required>
                     </div>
-                    {% if not usuario_e_garcom %}
+                    {% if edicao and not usuario_e_garcom %}
                     <div class="form-group">
                         <label for="telefone">Telefone:</label>
-                        <input type="tel" id="telefone" name="telefone" class="form-control" placeholder="(00) 00000-0000" required>
+                        <input type="tel" id="telefone" name="telefone" class="form-control" placeholder="(00) 00000-0000" value="{{ telefone }}" required>
                     </div>
                     {% endif %}
                     {% if usuario_e_garcom %}
@@ -46,10 +49,10 @@
                     <div class="form-group">
                         <label for="local_entrega">Local de entrega:</label>
                         <select id="local_entrega" name="local_entrega" class="form-control" required>
-                            <option value="" selected disabled>Selecione o local...</option>
-                            <option value="local" data-taxa="0">Retirar no local (sem taxa)</option>
+                            <option value="" {% if not edicao %}selected{% endif %} disabled>Selecione o local...</option>
+                            <option value="local" data-taxa="0" {% if edicao and not pedido.local_entrega_id %}selected{% endif %}>Retirar no local (sem taxa)</option>
                             {% for taxa in taxas_entrega %}
-                            <option value="{{ taxa.id }}" data-taxa="{{ taxa.taxa }}">{{ taxa.nome }} - R$ {{ taxa.taxa }}</option>
+                            <option value="{{ taxa.id }}" data-taxa="{{ taxa.taxa }}" {% if edicao and pedido.local_entrega_id == taxa.id %}selected{% endif %}>{{ taxa.nome }} - R$ {{ taxa.taxa }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -57,27 +60,27 @@
                     {% if not usuario_e_garcom %}
                     <div class="form-group" id="endereco-container">
                         <label for="endereco">Endereço de entrega:</label>
-                        <textarea id="endereco" name="endereco" class="form-control" rows="3" placeholder="Rua, número, bairro..."></textarea>
+                        <textarea id="endereco" name="endereco" class="form-control" rows="3" placeholder="Rua, número, bairro...">{{ endereco }}</textarea>
                     </div>
                     {% endif %}
                     {% if not usuario_e_garcom %}
                     <div class="form-group">
                         <label for="forma_pagamento">Forma de pagamento:</label>
                         <select id="forma_pagamento" name="forma_pagamento" class="form-control" required>
-                            <option value="" selected disabled>Selecione...</option>
-                            <option value="Dinheiro">Dinheiro</option>
-                            <option value="PIX">PIX</option>
-                            <option value="Cartão na entrega">Cartão na entrega</option>
+                            <option value="" {% if not edicao %}selected{% endif %} disabled>Selecione...</option>
+                            <option value="Dinheiro" {% if pedido.forma_pagamento == 'Dinheiro' %}selected{% endif %}>Dinheiro</option>
+                            <option value="PIX" {% if pedido.forma_pagamento == 'PIX' %}selected{% endif %}>PIX</option>
+                            <option value="Cartão na entrega" {% if pedido.forma_pagamento == 'Cartão na entrega' %}selected{% endif %}>Cartão na entrega</option>
                         </select>
                     </div>
                     <div class="form-group" id="troco-container" hidden>
                         <label for="troco">Troco para quanto?</label>
-                        <input type="text" id="troco" name="troco" class="form-control" placeholder="Ex: 50,00">
+                        <input type="text" id="troco" name="troco" class="form-control" placeholder="Ex: 50,00" value="{{ troco }}">
                     </div>
                     {% endif %}
                     <div class="form-group">
-                        <label for="observacao">Observação (opcional):</label>
-                        <textarea id="observacao" name="observacao" class="form-control" rows="2" placeholder="Observações do pedido..."></textarea>
+                        <label for="observacao">Observação: (opcional):</label>
+                        <textarea id="observacao" name="observacao" class="form-control" rows="2" placeholder="Observações do pedido...">{{ observacao }}</textarea>
                     </div>
                     <div class="form-group">
                         <label>Itens do Pedido:</label>
@@ -141,6 +144,16 @@
                                             <option value="chocolate">Chocolate (+R$ 6,00 a R$ 10,00)</option>
                                         </select>
                                     </div>
+                                    <div class="pizza-observacao">
+                                        <label for="observacao-pizza-0">Observação</label>
+                                        <textarea
+                                            id="observacao-pizza-0"
+                                            name="observacao_item[]"
+                                            class="form-control"
+                                            rows="2"
+                                            placeholder="Ex.: sem cebola, pouco queijo..."
+                                        ></textarea>
+                                    </div>
                                     <div class="sabor-field">
                                         <label for="catupiry-cima-0">Catupiry Original por cima</label>
                                         <select id="catupiry-cima-0" name="catupiry_cima[]" class="form-control">
@@ -174,13 +187,20 @@
                         </div>
                     </template>
                     <button type="button" onclick="adicionarBebida()" class="btn btn-secondary btn-block mb-3" style="display: block; margin-top: 10px;"><i class="fa-solid fa-plus"></i> Adicionar Bebida</button>
-                    <button type="submit" class="btn btn-primary btn-block" style="display: block; margin-top: 10px;">Registrar Pedido</button>
+                    <button type="submit" class="btn btn-primary btn-block" style="display: block; margin-top: 10px;">{% if edicao %}Salvar Alterações{% else %}Registrar Pedido{% endif %}</button>
                 </form>
             </div>
         </main>
     </div>
 
+    {% if edicao %}{{ edicao_itens|json_script:"edicao-itens" }}{% endif %}
     <script>
+        const precosConfigurados = {{ precos_json|safe }};
+
+        function formatarPreco(valor) {
+            return Number(valor || 0).toFixed(2).replace('.', ',');
+        }
+
         function atualizarCamposSabores(selectEl) {
             const item = selectEl.closest('.item-builder-row');
             const quantidadeSabores = parseInt(selectEl.value || '1', 10);
@@ -212,58 +232,87 @@
 
         function calcularPrecoPizza(item) {
             const tamanho = item.querySelector('[name="tamanho[]"]').value;
-            const quantidade = parseInt(item.querySelector('[name="quantidade[]"]').value || '1', 10) || 1;
-            const numSabores = parseInt(item.querySelector('[name="num_sabores[]"]').value || '1', 10);
-            const precosBase = { P: 25, M: 32, G: 39 };
-            const adicionaisEspeciais = {
-                parcial: { P: 2, M: 3, G: 4 },
-                total: { P: 4, M: 6, G: 8 },
-            };
-            let preco = precosBase[tamanho] || 39;
-            const sabores = Array.from(item.querySelectorAll('[name="sabor_1[]"], [name="sabor_2[]"], [name="sabor_3[]"]'))
-                .filter(select => !select.disabled && select.value);
-            const especiais = sabores.filter(select => select.options[select.selectedIndex]?.dataset.especial === '1').length;
+            const quantidade = parseInt(
+                item.querySelector('[name="quantidade[]"]').value || '1',
+                10,
+            ) || 1;
+
+            const sabores = Array.from(
+                item.querySelectorAll(
+                    '[name="sabor_1[]"], [name="sabor_2[]"], [name="sabor_3[]"]',
+                ),
+            ).filter(select => !select.disabled && select.value);
+
+            const especiais = sabores.filter(
+                select => select.options[select.selectedIndex]?.dataset.especial === '1',
+            ).length;
+
+            let preco = precosConfigurados.base[tamanho] || 0;
 
             if (especiais > 0) {
-                const tabela = especiais === sabores.length ? adicionaisEspeciais.total : adicionaisEspeciais.parcial;
-                preco += tabela[tamanho] || 0;
+                const adicional = especiais === sabores.length
+                    ? precosConfigurados.especial_total[tamanho]
+                    : precosConfigurados.especial_parcial[tamanho];
+
+                preco += adicional || 0;
             }
 
             const bordaTipo = item.querySelector('[name="borda_tipo[]"]').value;
             const catupiryCima = item.querySelector('[name="catupiry_cima[]"]').value;
-            const bordasChocolate = { P: 6, M: 8, G: 10 };
-            const catupiryMetade = { P: 5, M: 6, G: 7 };
-            const catupiryInteira = { P: 10, M: 12, G: 14 };
+
+            const valoresBorda = {
+                catupiry: precosConfigurados.borda_catupiry[tamanho],
+                cheddar: precosConfigurados.borda_cheddar[tamanho],
+                catupiry_original: precosConfigurados.borda_catupiry_original[tamanho],
+                chocolate: precosConfigurados.borda_chocolate[tamanho],
+            };
 
             const bordaSelect = item.querySelector('[name="borda_tipo[]"]');
             const catupiryCimaSelect = item.querySelector('[name="catupiry_cima[]"]');
-            const bordaValores = {
-                catupiry: 'Catupiry (+R$ 0,00)',
-                cheddar: 'Cheddar (+R$ 0,00)',
+
+            const bordaValoresTexto = {
+                catupiry: `Catupiry (+R$ ${formatarPreco(valoresBorda.catupiry)})`,
+                cheddar: `Cheddar (+R$ ${formatarPreco(valoresBorda.cheddar)})`,
                 sem_borda: 'Sem borda (+R$ 0,00)',
-                catupiry_original: `Catupiry Original (+R$ ${(catupiryInteira[tamanho] || 0).toFixed(2).replace('.', ',')})`,
-                chocolate: `Chocolate (+R$ ${(bordasChocolate[tamanho] || 0).toFixed(2).replace('.', ',')})`,
+                catupiry_original: `Catupiry Original (+R$ ${formatarPreco(valoresBorda.catupiry_original)})`,
+                chocolate: `Chocolate (+R$ ${formatarPreco(valoresBorda.chocolate)})`,
             };
+
             Array.from(bordaSelect.options).forEach(option => {
-                option.textContent = bordaValores[option.value] || option.textContent;
+                option.textContent = bordaValoresTexto[option.value] || option.textContent;
             });
-            catupiryCimaSelect.options[0].textContent = 'Não (+R$ 0)';
-            catupiryCimaSelect.options[1].textContent = `Metade (+R$ ${(catupiryMetade[tamanho] || 0).toFixed(2).replace('.', ',')})`;
-            catupiryCimaSelect.options[2].textContent = `Inteira (+R$ ${(catupiryInteira[tamanho] || 0).toFixed(2).replace('.', ',')})`;
-            if (bordaTipo === 'chocolate') preco += bordasChocolate[tamanho] || 0;
-            if (bordaTipo === 'catupiry_original') preco += catupiryInteira[tamanho] || 0;
-            if (catupiryCima === 'metade') preco += catupiryMetade[tamanho] || 0;
-            if (catupiryCima === 'inteira') preco += catupiryInteira[tamanho] || 0;
+
+            catupiryCimaSelect.options[0].textContent = 'Não (+R$ 0,00)';
+            catupiryCimaSelect.options[1].textContent =
+                `Metade (+R$ ${formatarPreco(precosConfigurados.catupiry_metade[tamanho])})`;
+            catupiryCimaSelect.options[2].textContent =
+                `Inteira (+R$ ${formatarPreco(precosConfigurados.catupiry_inteira[tamanho])})`;
+
+            preco += valoresBorda[bordaTipo] || 0;
+
+            if (catupiryCima === 'metade') {
+                preco += precosConfigurados.catupiry_metade[tamanho] || 0;
+            }
+
+            if (catupiryCima === 'inteira') {
+                preco += precosConfigurados.catupiry_inteira[tamanho] || 0;
+            }
 
             const total = preco * quantidade;
             const totalEl = item.querySelector('.pizza-price strong');
+
             if (totalEl) {
-                totalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+                totalEl.textContent = `R$ ${formatarPreco(total)}`;
             }
         }
 
         function configurarItem(item) {
             item.querySelectorAll('input[type="number"]').forEach(input => input.value = '1');
+
+            item.querySelectorAll('textarea[name="observacao_item[]"]').forEach(textarea => {
+                textarea.value = '';
+            });
+
             item.querySelectorAll('select').forEach(select => {
                 if (select.name === 'num_sabores[]') {
                     select.value = '1';
@@ -371,7 +420,7 @@
             const trocoContainer = document.getElementById('troco-container');
 
             function atualizarCamposPedido() {
-                const retirada = localEntrega.value === 'local';
+                const retirada = localEntrega && localEntrega.value === 'local';
                 if (enderecoContainer && endereco) {
                     enderecoContainer.hidden = retirada;
                     endereco.required = !retirada;
@@ -394,7 +443,49 @@
             atualizarRotulosPizzas();
             atualizarBotoesRemover(document.getElementById('itens-container'));
             atualizarBotoesRemover(document.getElementById('bebidas-container'));
+
+            {% if edicao %}
+            preencherEdicao(JSON.parse(document.getElementById('edicao-itens').textContent));
+            {% endif %}
+            atualizarCamposPedido();
         });
+
+        {% if edicao %}
+        function preencherEdicao(dados) {
+            const container = document.getElementById('itens-container');
+            const definir = (linha, nome, valor) => {
+                const campo = linha.querySelector(`[name="${nome}"]`);
+                if (campo && valor !== undefined && valor !== null) campo.value = String(valor);
+            };
+
+            if (!dados.pizzas.length) {
+                // Pedido só de bebidas: a pizza em branco não deve bloquear o envio.
+                container.querySelectorAll('select[name="sabor_1[]"]').forEach(s => { s.required = false; });
+            }
+
+            dados.pizzas.forEach((pizza, indice) => {
+                if (indice > 0) adicionarItem();
+                const linha = container.children[indice];
+                definir(linha, 'tamanho[]', pizza.tamanho);
+                const seletor = linha.querySelector('.js-num-sabores');
+                seletor.value = String(Math.min(3, Math.max(1, pizza.sabores.length)));
+                atualizarCamposSabores(seletor);
+                ['sabor_1[]', 'sabor_2[]', 'sabor_3[]'].forEach((nome, k) => definir(linha, nome, pizza.sabores[k]));
+                definir(linha, 'borda_tipo[]', pizza.borda_tipo);
+                definir(linha, 'catupiry_cima[]', pizza.catupiry_cima);
+                definir(linha, 'quantidade[]', pizza.quantidade);
+                definir(linha, 'observacao_item[]', pizza.observacao);
+                calcularPrecoPizza(linha);
+            });
+
+            dados.bebidas.forEach(bebida => {
+                adicionarBebida();
+                const linha = document.getElementById('bebidas-container').lastElementChild;
+                definir(linha, 'bebida_id[]', bebida.bebida);
+                definir(linha, 'bebida_quantidade[]', bebida.quantidade);
+            });
+        }
+        {% endif %}
     </script>
 </body>
 </html>
